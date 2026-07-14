@@ -1,14 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getEntries } from '../../storage/coreCrud';
+import { getEntries } from '../../storage/helpers';
+import { subscribeToEntries } from '../../storage/subscription';
 import { Entry } from '../../storage/typeEntry';
 import { colors } from '../../styles/global';
 
 
+import NetworkToast from '../../components/NetworkToast';
 import AddEntryScreen from './add-entry';
 import AllEntriesScreen from './entries';
 import HomeScreen from './index';
@@ -45,6 +47,11 @@ export default function TabLayout() {
   goToTab(2); // AllEntriesScreen is page 0 in your PagerView
 };
 
+useEffect(() => {
+  const unsubscribe = subscribeToEntries(setEntries);
+  return () => unsubscribe();
+}, []);
+
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -63,13 +70,10 @@ export default function TabLayout() {
          reload={loadEntries}
          searchVisible={searchVisible} 
          setSearchVisible={setSearchVisible} 
-         entries={entries}/></View>
-        
-        
-        
+         entries={entries}/></View>                
       </PagerView>
 
-
+       <NetworkToast/>
       {/* Custom Tab Bar */}
       <View style={[styles.tabBar, { bottom: insets.bottom + 16 }]}>
         <BlurView

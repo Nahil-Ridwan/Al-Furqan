@@ -1,24 +1,24 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { writeBatch } from 'firebase/firestore';
+import { CACHE_KEY, readCache, removeCacheEntry, updateCacheEntry } from './cacheService';
+import { db } from './firebaseConfig';
+import { studentsRef } from './helpers';
+import { addPendingMutation, PENDING_MUTATIONS_KEY, syncPendingMutations } from './offlineMutation';
+import { LAST_SYNC_KEY, notifySubscribers } from './subscription';
 import { Entry } from './typeEntry';
 
-const ENTRIES_KEY = 'entries';
+const STUDENTS_KEY = 'students';
 
 export async function getEntryById(id: string): Promise<Entry | null> {
-  const json = await AsyncStorage.getItem(ENTRIES_KEY);
-  if (!json) return null;
-
-  const entries: Entry[] = JSON.parse(json);
+  const entries = await readCache();
+  if (!entries) return null;
   return entries.find(entry => entry.id === id) ?? null;
 }
 
-export const getEntries = async (): Promise<Entry[]> => {
-  const data = await AsyncStorage.getItem(ENTRIES_KEY);
-  return data ? JSON.parse(data) : [];
-};
 
 export const saveEntries = async (entries: Entry[]): Promise<void> => {
   try {
-    await AsyncStorage.setItem(ENTRIES_KEY, JSON.stringify(entries));
+    await AsyncStorage.setItem(STUDENTS_KEY, JSON.stringify(entries));
     console.log(`Saved ${entries.length} entries`);
   } catch (error) {
     console.error('Error saving entries:', error);
@@ -28,40 +28,87 @@ export const saveEntries = async (entries: Entry[]): Promise<void> => {
 
 
 export const deleteEntry = async (id: string): Promise<void> => {
-  const entries = await getEntries();
-  const filtered = entries.filter((entry) => entry.id !== id);
-  await AsyncStorage.setItem(ENTRIES_KEY, JSON.stringify(filtered));
+  // Remove from cache immediately.
+  await removeCacheEntry(id);
+  const cached = await readCache();
+  notifySubscribers(cached);
+
+  // Add to pending mutations queue
+  await addPendingMutation(id, 'DELETE');
+
+  // Trigger sync in background
+  syncPendingMutations().catch((err) =>
+    console.error('Firestore deleteEntry sync failed:', err),
+  );
 };
 
 export const clearAllEntries = async (): Promise<void> => {
-  await AsyncStorage.removeItem(ENTRIES_KEY);
+  // Clear local cache, sync timestamp, and pending mutations immediately.
+  await AsyncStorage.removeItem(CACHE_KEY);
+  await AsyncStorage.removeItem(LAST_SYNC_KEY);
+  await AsyncStorage.removeItem(PENDING_MUTATIONS_KEY);
+  notifySubscribers([]);
+
+  // Batch-delete from Firestore.
+  const { getDocs: _getDocs } = await import('firebase/firestore');
+  const snap = await _getDocs(studentsRef);
+  const BATCH_SIZE = 450;
+  const docs = snap.docs;
+  for (let i = 0; i < docs.length; i += BATCH_SIZE) {
+    const chunk = docs.slice(i, i + BATCH_SIZE);
+    const batch = writeBatch(db);
+    chunk.forEach((d) => batch.delete(d.ref));
+    await batch.commit();
+  }
 };
 
 export const addEntry = async (
   entry: Omit<Entry, 'id' | 'createdAt'>,
 ): Promise<Entry> => {
-  const entries = await getEntries();
+
+  const id = Date.now().toString();
   const newEntry: Entry = {
     ...entry,
-    id: Date.now().toString(),
-    createdAt: new Date().toISOString(),
+    id,
     subjects: entry.subjects || [],
     marks: entry.marks || {},
     fees: entry.fees || { quarter: 0, halfYear: 0, total: 0 },
     history: entry.history || [],
     profileImage: entry.profileImage || null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(), // for cloud
   };
-  console.log('new entry : ',newEntry.name, newEntry.active)
-  await AsyncStorage.setItem(ENTRIES_KEY, JSON.stringify([newEntry, ...entries]));
+  await updateCacheEntry(newEntry);
+  const cached = await readCache();
+  notifySubscribers(cached);
+
+  // Add to pending mutations queue
+  await addPendingMutation(id, 'UPSERT', newEntry);
+
+  // Trigger sync in background
+  syncPendingMutations().catch((err) =>
+    console.error('Firestore addEntry sync failed:', err),
+  );
   return newEntry;
 };
 
 export const updateEntry = async (updated: Entry): Promise<void> => {
-  const entries = await getEntries();
-  const index = entries.findIndex((entry) => entry.id === updated.id);
-  if (index !== -1) {
-    entries[index] = updated;
-    console.log('updated : ',updated.name, updated.active);
-    await AsyncStorage.setItem(ENTRIES_KEY, JSON.stringify(entries));
-  }
+  const finalEntry: Entry = {
+    ...updated,
+    updatedAt: new Date().toISOString(), // for cloud
+  };
+
+  // Update cache immediately.
+  await updateCacheEntry(finalEntry);
+  const cached = await readCache();
+  notifySubscribers(cached);
+
+  // Add to pending mutations queue
+  await addPendingMutation(finalEntry.id, 'UPSERT', finalEntry);
+
+  // Trigger sync in background
+  syncPendingMutations().catch((err) =>
+    console.error('Firestore updateEntry sync failed:', err),
+  );
+  
 };

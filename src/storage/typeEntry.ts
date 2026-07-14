@@ -36,4 +36,5 @@ export type Entry = {
   fees: TermFees;
   history: HistoricalRecord[];
   createdAt: string;
+  updatedAt?: string; // for cloud
 };

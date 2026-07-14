@@ -1,97 +1,15 @@
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
+import { doc, writeBatch } from 'firebase/firestore';
 import * as XLSX from 'xlsx';
-import { getEntries, saveEntries } from './coreCrud'; // Make sure saveEntries is exported from entries.ts
-import { Entry, HistoricalRecord, SubjectMark, TermFees } from './typeEntry';
+import { readCache, writeCache } from './cacheService';
+import { db } from './firebaseConfig';
+import { flattenHistory, flattenMarks, getEntries, parseHistory, parseMarks, studentsRef } from './helpers';
+import { addPendingMutations, removePendingMutations, syncPendingMutations, } from './offlineMutation';
+import { notifySubscribers } from './subscription';
+import { Entry, TermFees } from './typeEntry';
 
-// Helper to flatten historical records for Excel export
-const flattenHistory = (history: HistoricalRecord[]): { [key: string]: any } => {
-  const flat: { [key: string]: any } = {};
-  history.forEach((record, index) => {
-    const prefix = `history_${index + 1}`;
-    flat[`${prefix}_standard`] = record.standard;
-    flat[`${prefix}_subjects`] = record.subjects.join(', ');
-    flat[`${prefix}_movedAt`] = record.movedAt;
-    
-    // Flatten marks
-    Object.entries(record.marks).forEach(([subject, marks]) => {
-      flat[`${prefix}_${subject}_term_1`] = marks.quarter;
-      flat[`${prefix}_${subject}_term_2`] = marks.halfYear;
-      flat[`${prefix}_${subject}_total`] = marks.total;
-    });
-    
-    // Flatten fees
-    flat[`${prefix}_fees_first`] = record.fees.first;
-    flat[`${prefix}_fees_second`] = record.fees.second;
-    flat[`${prefix}_fees_third`] = record.fees.third;
-    flat[`${prefix}_fees_fourth`] = record.fees.fourth;
-  });
-  return flat;
-};
-
-// Helper to parse flattened history from Excel import
-const parseHistory = (row: any): HistoricalRecord[] => {
-  const history: HistoricalRecord[] = [];
-  let index = 1;
-  
-  while (row[`history_${index}_standard`] !== undefined) {
-    const prefix = `history_${index}`;
-    
-    // Parse marks
-    const marks: { [subjectName: string]: SubjectMark } = {};
-    const subjects = row[`${prefix}_subjects`]?.split(',').map((s: string) => s.trim()) || [];
-    
-    subjects.forEach((subject: string) => {
-      marks[subject] = {
-        quarter: row[`${prefix}_${subject}_term_1`] !== undefined ? Number(row[`${prefix}_${subject}_term_1`]) : null,
-        halfYear: row[`${prefix}_${subject}_term_2`] !== undefined ? Number(row[`${prefix}_${subject}_term_2`]) : null,
-        total: row[`${prefix}_${subject}_total`] !== undefined ? Number(row[`${prefix}_${subject}_total`]) : null,
-      };
-    });
-    
-    history.push({
-      standard: Number(row[`${prefix}_standard`]) || 0,
-      subjects,
-      marks,
-      fees: {
-        first: Number(row[`${prefix}_fees_first`]) || 0,
-        second: Number(row[`${prefix}_fees_second`]) || 0,
-        third: Number(row[`${prefix}_fees_third`]) || 0,
-        fourth: Number(row[`${prefix}_fees_fourth`]) || 0,
-      },
-      movedAt: row[`${prefix}_movedAt`] || new Date().toISOString(),
-    });
-    
-    index++;
-  }
-  
-  return history;
-};
-
-// Helper to flatten marks for Excel
-const flattenMarks = (marks: { [subjectName: string]: SubjectMark }): { [key: string]: any } => {
-  const flat: { [key: string]: any } = {};
-  Object.entries(marks).forEach(([subject, subjectMarks]) => {
-    flat[`${subject}_term_1`] = subjectMarks.quarter;
-    flat[`${subject}term_2`] = subjectMarks.halfYear;
-    flat[`${subject}_total`] = subjectMarks.total;
-  });
-  return flat;
-};
-
-// Helper to parse marks from Excel import
-const parseMarks = (row: any, subjects: string[]): { [subjectName: string]: SubjectMark } => {
-  const marks: { [subjectName: string]: SubjectMark } = {};
-  subjects.forEach((subject) => {
-    marks[subject] = {
-      quarter: row[`${subject}_term_1`] !== undefined ? Number(row[`${subject}_term_1`]) : null,
-      halfYear: row[`${subject}_term_2`] !== undefined ? Number(row[`${subject}_term_2`]) : null,
-      total: row[`${subject}_total`] !== undefined ? Number(row[`${subject}_total`]) : null,
-    };
-  });
-  return marks;
-};
 
 // ---- Export to Excel ----
 export const exportEntries = async (): Promise<void> => {
@@ -201,36 +119,60 @@ export const pickAndImportEntries = async (): Promise<void> => {
       };
     });
 
-    // Read existing entries from AsyncStorage
-    const existingEntries = await getEntries();
-    console.log('Existing entries before import:', existingEntries.length);
-    
-    // Merge: update existing entries or add new ones
-    const mergedEntries = [...existingEntries];
-    
-    parsed.forEach((newEntry) => {
-      const existingIndex = mergedEntries.findIndex((e) => e.id === newEntry.id);
-      if (existingIndex >= 0) {
-        // Update existing entry
-        mergedEntries[existingIndex] = newEntry;
-        console.log(`Updated entry: ${newEntry.id}`);
-      } else {
-        // Add new entry
-        mergedEntries.push(newEntry);
-        console.log(`Added new entry: ${newEntry.id}`);
-      }
+    // Write to AsyncStorage cache immediately so the UI reflects the import
+  // right away without waiting for Firestore.
+  const existingCache = await readCache();
+  const merged = [
+    ...existingCache.filter((e) => !parsed.some((p) => p.id === e.id)),
+    ...parsed,
+  ];
+  await writeCache(merged);
+  notifySubscribers(merged);
+
+  // Add all imported entries to the pending mutations queue
+  const mutationsToQueue = parsed.map((entry) => ({
+    id: entry.id,
+    type: 'UPSERT' as const,
+    entry,
+  }));
+  await addPendingMutations(mutationsToQueue);
+
+  // Batch-write to Firestore in the background.
+  const BATCH_SIZE = 450;
+  let written = 0;
+  const failedBatches: number[] = [];
+
+  for (let i = 0; i < parsed.length; i += BATCH_SIZE) {
+    const chunk = parsed.slice(i, i + BATCH_SIZE);
+    const batch = writeBatch(db);
+    chunk.forEach((entry) => {
+      batch.set(doc(studentsRef, entry.id), entry);
     });
 
-    // ******* CRITICAL FIX: Save the merged data back to AsyncStorage *******
-    await saveEntries(mergedEntries);
-    console.log(`Saved ${mergedEntries.length} entries to AsyncStorage`);
-    
-    // Verify data was saved
-    const verifyEntries = await getEntries();
-    console.log('Verification - Total entries after save:', verifyEntries.length);
-
-  } catch (error) {
-    console.error('Import error:', error);
-    throw error;
+    try {
+      await batch.commit();
+      written += chunk.length;
+      // Successfully committed this batch, remove these from the pending mutations queue
+      const idsToRemove = chunk.map((e) => e.id);
+      await removePendingMutations(idsToRemove);
+    } catch (err) {
+      console.error(`Failed to import batch starting at row ${i}:`, err);
+      failedBatches.push(i);
+    }
   }
+
+  // Trigger background sync to attempt uploading any failed batches
+  syncPendingMutations().catch((err) =>
+    console.error('Firestore import background sync failed:', err),
+  );
+
+  if (failedBatches.length > 0) {
+    throw new Error(
+      `Imported ${written}/${parsed.length} entries. ${failedBatches.length} batch(es) failed — check your connection and try importing again.`,
+    );
+  }
+} catch (err) {
+  console.log(err,'error');
+  
+}
 };
