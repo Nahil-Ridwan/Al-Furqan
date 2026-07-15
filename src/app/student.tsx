@@ -32,7 +32,6 @@ export default function StudentDetailScreen() {
 
   // Promotion Local State
   const [promoStandard, setPromoStandard] = useState('');
-  const [promoSubjects, setPromoSubjects] = useState<string[]>([]);
 
   // Autosave
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -57,7 +56,6 @@ const handleTabPress = (index: number) => {
         if (data) {
           setStudent(data);
           // Initialize promotion fields
-          setPromoSubjects(data.subjects || []);
         }
       } catch (err) {
         console.error(err);
