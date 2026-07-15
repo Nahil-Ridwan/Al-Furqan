@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useRef } from 'react';
 import { Animated, Modal, PanResponder, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useAppMode } from '../storage/appModeContext';
 import { colors } from '../styles/global';
 
 export type ActionOption = {
@@ -63,6 +64,9 @@ export default function CustomActionSheet({
 
   const overlayOpacity = useRef(new Animated.Value(0)).current;
   const slideAnimation = useRef(new Animated.Value(300)).current;
+  const { mode } = useAppMode();
+  const isViewMode = mode === 'view';
+  
 
   useEffect(() => {
     if (visible) {
@@ -165,7 +169,7 @@ export default function CustomActionSheet({
                   <TouchableOpacity
                     key={index}
                     style={[
-                      styles.actionButton,
+                      isViewMode ? styles.shareButton : styles.actionButton,
                       option.variant === 'destructive' && styles.deleteButton,
                     ]}
                     onPress={() => handleOptionPress(option)}
@@ -270,6 +274,16 @@ actionButtonsRow: {
   justifyContent: 'space-between',
   gap: 10,
   marginBottom: 10,
+},
+
+shareButton: {
+  flex: 1,
+  backgroundColor: 'rgba(255,255,255,0.05)',
+  padding: 15,
+  borderRadius: 10,
+  alignItems: 'center',
+  justifyContent: 'center',
+  minHeight: 100, // Minimum height to maintain shape
 },
 
 // Update actionButton style:

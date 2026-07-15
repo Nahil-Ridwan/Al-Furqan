@@ -2,6 +2,7 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useAppMode } from '../storage/appModeContext';
 import { deleteEntry, updateEntry } from '../storage/coreCrud';
 import { Entry } from '../storage/typeEntry';
 import { colors } from '../styles/global';
@@ -19,6 +20,8 @@ type EntryItemProps = {
 
 export default function EntryItem({ student, onDelete }: EntryItemProps) {
   const { id, name, regno, mobile, standard, profileImage, subjects = [], fees } = student;
+  const { mode } = useAppMode();
+  const isViewMode = mode === 'view';
   
   const totalFees = (fees?.first || 0) + (fees?.second || 0) + (fees?.third || 0) + (fees?.fourth || 0);
 
@@ -135,7 +138,19 @@ export default function EntryItem({ student, onDelete }: EntryItemProps) {
         title="Student Action"
         message={`Choose action for student "${name}"?`}
         onClose={handleClose}
-        options={[
+        options={isViewMode ? [
+          {
+            text: 'SHARE',
+            onPress: () =>  handleReport(student),
+            variant: 'default',
+            icon: 'newspaper-outline'
+          },
+          {
+            text: 'Cancel',
+            onPress: handleClose,
+            variant: 'cancel',
+          },
+        ] : [
           {
             text: isActive ? 'DEACTIVATE' : 'ACTIVATE',
             onPress: handleToggleActive,
@@ -262,7 +277,7 @@ const styles = StyleSheet.create({
   inactiveContainer: {
     opacity: 0.5,
     backgroundColor: colors.inactive, // More transparent
-    borderColor: 'rgba(255, 0, 0, 0.2)',
+    borderColor: 'rgba(33, 32, 32, 0.2)',
   },
 });
 

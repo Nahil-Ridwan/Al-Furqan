@@ -10,13 +10,13 @@ type RecentEntriesProps = {
 
 export default function RecentEntries({ entries = [], onDelete }: RecentEntriesProps) {
   return (
-    <View style={{ marginTop: 18, paddingBottom: 100 }}>
+    <View style={{ marginTop: 10, paddingBottom: 100 }}>
       <Text style={styles.sectionTitle}>Recently Added Students</Text>
       {entries.length === 0 ? (
         <Text style={styles.empty}>No students registered yet.</Text>
       ) : (
         entries
-          .slice(0, 5)
+          .slice(0, 4)
           .map((entry) => (
             <EntryItem
               key={entry.id}

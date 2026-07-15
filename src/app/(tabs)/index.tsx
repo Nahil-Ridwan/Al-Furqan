@@ -6,6 +6,7 @@ import HomeHeader from '../../components/HomeHeader';
 import MacroGrid from '../../components/MacroGrid';
 import RecentEntries from '../../components/RecentEntries';
 import { exportEntries, pickAndImportEntries } from '../../storage/importExport';
+import { useAppMode } from '../../storage/appModeContext';
 import { Entry } from '../../storage/typeEntry';
 import { colors, globalStyles } from '../../styles/global';
 
@@ -16,6 +17,7 @@ type Props = {
 };
 
 export default function HomeScreen({ entries = [], openAllEntriesWithSearch, reload = async () => {} } : Props) {
+  const { mode } = useAppMode();
 
   const handleImport = async () => {
   try {
@@ -46,15 +48,17 @@ export default function HomeScreen({ entries = [], openAllEntriesWithSearch, rel
       <ScrollView style={globalStyles.container}>
         <View style={globalStyles.header}>
           <Text style={globalStyles.title}>Al-Furqan</Text>
+          {mode !== 'view' && (
+            <>
+              <TouchableOpacity style={{ marginTop: 8, marginLeft: 55 }}>
+                <Ionicons name='cloud-download-outline' size={26} color={colors.primary} onPress={handleImport}/>
+              </TouchableOpacity>
 
-          <TouchableOpacity style={{ marginTop: 8, marginLeft: 55 }}>
-            <Ionicons name='cloud-download-outline' size={26} color={colors.primary} onPress={handleImport}/>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={{ marginTop: 8, marginRight: 17 }}>
-            <Ionicons name='cloud-upload-outline' size={26} color={colors.primary} onPress={exportEntries}/>
-          </TouchableOpacity>
-
+              <TouchableOpacity style={{ marginTop: 8, marginRight: 17 }}>
+                <Ionicons name='cloud-upload-outline' size={26} color={colors.primary} onPress={exportEntries}/>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
         <HomeHeader />
         <MacroGrid entries={entries} openAllEntriesWithSearch={openAllEntriesWithSearch}/>

@@ -3,29 +3,29 @@ import { colors } from "./global";
 
 export const styles = StyleSheet.create({
 
-totalDisplay: {
-  justifyContent: 'center',
-  alignItems: 'center',
-  backgroundColor: 'rgba(186, 141, 82, 0.1)',
-  borderColor: 'rgba(186, 141, 82, 0.3)',
-},
-totalText: {
-  color: colors.text,
-  fontSize: 16,
-  fontWeight: '600',
-  textAlign: 'center',
-},
-totalTextPlaceholder: {
-  color: colors.textSecondary,
-  fontWeight: '400',
-},
+  totalDisplay: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.totalbox,
+    borderColor: colors.totalboxborder,
+  },
+  totalText: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  totalTextPlaceholder: {
+    color: colors.textSecondary,
+    fontWeight: '400',
+  },
 
-pagerView: {
-  flex: 1,
-},
-page: {
-  flex: 1,
-},
+  pagerView: {
+    flex: 1,
+  },
+  page: {
+    flex: 1,
+  },
 
   container: {
     flex: 1,
@@ -81,111 +81,111 @@ page: {
     padding: 20,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#bfbaa888',
+    borderColor: colors.contentborder,
   },
   profileContentRow: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-},
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
 
-profileDetails: {
-  flex: 1,
-  marginRight: 16,
-},
+  profileDetails: {
+    flex: 1,
+    marginRight: 16,
+  },
 
-studentName: {
-  fontSize: 22,
-  fontWeight: '700',
-  color: colors.text,
-  marginBottom: 12,
-},
+  studentName: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 12,
+  },
 
-detailItem: {
-  marginBottom: 8,
-},
+  detailItem: {
+    marginBottom: 8,
+  },
 
-infoLabel: {
-  fontSize: 12,
-  color: colors.textSecondary,
-  textTransform: 'uppercase',
-  letterSpacing: 0.5,
-  marginBottom: 2,
-},
+  infoLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 2,
+  },
 
-infoVal: {
-  fontSize: 16,
-  fontWeight: '500',
-  color: colors.text,
-},
+  infoVal: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.text,
+  },
 
-profileHorizontalLayout: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  alignItems: 'flex-start',
-},
+  profileHorizontalLayout: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
 
-profileDetailsColumn: {
-  flex: 1,
-  marginRight: 20,
-},
+  profileDetailsColumn: {
+    flex: 1,
+    marginRight: 20,
+  },
 
-detailsStack: {
-  marginTop: 8,
-},
+  detailsStack: {
+    marginTop: 8,
+  },
 
-detailRow: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  marginBottom: 6,
-},
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
 
-detailText: {
-  fontSize: 14,
-  color: colors.text,
-  marginLeft: 8,
-  fontWeight: '500',
-},
+  detailText: {
+    fontSize: 14,
+    color: colors.text,
+    marginLeft: 8,
+    fontWeight: '500',
+  },
 
-profileImageContainer: {
-  width: 100,
-  height: 100,
-  borderRadius: 50,
-  position: 'relative',
-  marginTop:11
-},
+  profileImageContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    position: 'relative',
+    marginTop: 11
+  },
 
-profileImage: {
-  width: 100,
-  height: 100,
-  borderRadius: 50,
-},
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+  },
 
-profileImagePlaceholder: {
-  backgroundColor: colors.primary,
-  alignItems: 'center',
-  justifyContent: 'center',
-},
+  profileImagePlaceholder: {
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 
-avatarText: {
-  fontSize: 36,
-  fontWeight: '700',
-  color: colors.background,
-},
+  avatarText: {
+    fontSize: 36,
+    fontWeight: '700',
+    color: colors.background,
+  },
 
-editBadge: {
-  position: 'absolute',
-  bottom: 0,
-  right: 0,
-  backgroundColor: colors.primary,
-  borderRadius: 12,
-  width: 24,
-  height: 24,
-  alignItems: 'center',
-  justifyContent: 'center',
-  borderWidth: 2,
-  borderColor: colors.background,
-},
+  editBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: colors.background,
+  },
   infoRow: {
     flexDirection: 'row',
     width: '100%',
@@ -197,7 +197,7 @@ editBadge: {
   infoCol: {
     alignItems: 'center',
   },
-  
+
   tabContainer: {
     flexDirection: 'row',
     backgroundColor: 'rgba(255,255,255,0.04)',
@@ -212,7 +212,7 @@ editBadge: {
     borderRadius: 8,
   },
   tabButtonActive: {
-    backgroundColor: colors.primary + '27' ,
+    backgroundColor: colors.primary + '45',
   },
   tabText: {
     fontSize: 13,
@@ -223,25 +223,25 @@ editBadge: {
     color: colors.primary,
   },
   innerSection: {
-  flex: 1,
-  backgroundColor: colors.surface,
-  borderRadius: 16,
-  padding: 16,
-  borderWidth: 1,
-  borderColor: '#bfbaa888',
-},
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.contentborder,
+  },
   tabContent: {
-  flex: 1,  // This is crucial - makes PagerView take remaining space
-  paddingHorizontal: 16,
-  marginVertical: 20,
-    
-},
+    flex: 1,  // This is crucial - makes PagerView take remaining space
+    paddingHorizontal: 16,
+    marginVertical: 20,
+
+  },
 
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: colors.text,
-    marginBottom:20
+    marginBottom: 20
   },
   sectionSubtitle: {
     fontSize: 12,
@@ -351,7 +351,7 @@ editBadge: {
     fontSize: 24,
     fontWeight: 'bold',
     marginTop: -4,
-    marginLeft:6
+    marginLeft: 6
   },
   promotionForm: {
     gap: 14,
@@ -389,7 +389,7 @@ editBadge: {
     flexWrap: 'wrap',
     gap: 8,
     marginTop: 8,
-    
+
   },
   promoTag: {
     flexDirection: 'row',

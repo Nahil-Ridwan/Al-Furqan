@@ -14,6 +14,7 @@ import {
   View
 } from 'react-native';
 import PagerView from 'react-native-pager-view';
+import { useAppMode } from '../storage/appModeContext';
 import { getEntryById, updateEntry } from '../storage/coreCrud';
 import { Entry, SubjectMark, TermFees } from '../storage/typeEntry';
 import { colors, globalStyles } from '../styles/global';
@@ -29,6 +30,8 @@ export default function StudentDetailScreen() {
   const [student, setStudent] = useState<Entry | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('marks');
   const [loading, setLoading] = useState(true);
+  const { mode } = useAppMode();
+  const isViewMode = mode === 'view';
 
   // Promotion Local State
   const [promoStandard, setPromoStandard] = useState('');
@@ -39,14 +42,15 @@ export default function StudentDetailScreen() {
   
 
   // Add these lines right after your existing state declarations
-const pagerRef = useRef<PagerView>(null);
-const tabTypes: TabType[] = ['marks', 'fees', 'promote', 'history'];
-
-// Add this function to handle tab press navigation
-const handleTabPress = (index: number) => {
-  pagerRef.current?.setPage(index);
-};
-
+  const pagerRef = useRef<PagerView>(null);
+  const tabTypes: TabType[] = isViewMode
+    ? ['marks', 'fees', 'history']
+    : ['marks', 'fees', 'promote', 'history'];
+  
+  const handleTabPress = (tab: TabType) => {
+    const index = tabTypes.indexOf(tab);
+    pagerRef.current?.setPage(index);
+  };
 
   useEffect(() => {
     async function loadStudent() {
@@ -75,7 +79,7 @@ const handleTabPress = (index: number) => {
     isFirstRender.current = false;
     return;
   }
-  if (!student) return;
+  if (!student || isViewMode) return;
 
   if (saveTimer.current) clearTimeout(saveTimer.current);
   
@@ -95,15 +99,11 @@ const handleTabPress = (index: number) => {
   return () => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
   };
-}, [student?.marks, student?.fees]);
+  }, [student?.marks, student?.fees]);
 
   // Sync PagerView when activeTab changes programmatically
-useEffect(() => {
-  const index = tabTypes.indexOf(activeTab);
-  if (index !== -1 && pagerRef.current) {
-    pagerRef.current.setPage(index);
-  }
-}, [activeTab]);
+
+
 
   if (loading) {
     return (
@@ -314,8 +314,6 @@ const calculateTotal = (quarter: number | null, halfYear: number | null): number
     );
   };
 
-  
-
   return (
   <KeyboardAvoidingView
     style={{ flex: 1, backgroundColor: colors.background }}
@@ -366,7 +364,11 @@ const calculateTotal = (quarter: number | null, halfYear: number | null): number
             </View>
 
             {/* Right Side - Profile Image */}
-            <TouchableOpacity onPress={handleProfileImageChange} style={styles.profileImageContainer}>
+            <TouchableOpacity 
+              onPress={handleProfileImageChange} 
+              disabled={isViewMode}
+              style={styles.profileImageContainer}
+            >
               {profileImage ? (
                 <Image source={{ uri: profileImage }} style={styles.profileImage} />
               ) : (
@@ -376,9 +378,11 @@ const calculateTotal = (quarter: number | null, halfYear: number | null): number
                   </Text>
                 </View>
               )}
-              <View style={styles.editBadge}>
-                <Ionicons name="camera" size={14} color={colors.background} />
-              </View>
+              {!isViewMode && (
+                <View style={styles.editBadge}>
+                  <Ionicons name="camera" size={14} color={colors.background} />
+                </View>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -386,11 +390,11 @@ const calculateTotal = (quarter: number | null, halfYear: number | null): number
 
       {/* Custom Tab Segment */}
       <View style={styles.tabContainer}>
-        {tabTypes.map((tab, index) => (
+       {tabTypes.map((tab) => (
           <TouchableOpacity
             key={tab}
             style={[styles.tabButton, activeTab === tab && styles.tabButtonActive]}
-            onPress={() => handleTabPress(index)}
+            onPress={() => handleTabPress(tab)}
           >
             <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
               {tab === 'marks' && 'Marks'}
@@ -405,239 +409,228 @@ const calculateTotal = (quarter: number | null, halfYear: number | null): number
       {/* Tab content area with PagerView - Takes remaining space */}
       <View style={styles.tabContent}>
         <PagerView
+          key={isViewMode ? 'view-mode' : 'edit-mode'}
           ref={pagerRef}
           style={styles.pagerView}
-          pageMargin={13} // Add spacing between pages
+          pageMargin={13}
           initialPage={0}
           onPageSelected={(e) => {
             const index = e.nativeEvent.position;
             setActiveTab(tabTypes[index]);
-          }}
-        >
-          {/* MARKS SECTION */}
-          <View key="marks" style={styles.page}>
-            <ScrollView 
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-            >
-              <View style={styles.innerSection}>
-                <Text style={styles.sectionTitle}>Exam Marks</Text>
-
-                {subjects.length === 0 ? (
-                  <Text style={styles.emptyText}>No subjects currently assigned.</Text>
-                ) : (
-                  subjects.map((subject) => {
-                    const sMarks = marks[subject] || { quarter: null, halfYear: null, total: null };
-                    return (
-                      <View key={subject} style={styles.subjectMarkRow}>
-                        <Text style={styles.subjectName}>{subject}</Text>
-                        <View style={styles.inputsRow}>
-                          <View style={styles.inputCol}>
-                            <Text style={styles.inputLabel}>Term-1</Text>
-                            <TextInput
-                              style={styles.scoreInput}
-                              placeholder="-"
-                              placeholderTextColor={colors.textSecondary}
-                              keyboardType="numeric"
-                              value={sMarks.quarter !== null ? String(sMarks.quarter) : ''}
-                              onChangeText={(val) => handleMarkChange(subject, 'quarter', val)}
-                            />
-                          </View>
-                          <View style={styles.inputCol}>
-                            <Text style={styles.inputLabel}>Term-2</Text>
-                            <TextInput
-                              style={styles.scoreInput}
-                              placeholder="-"
-                              placeholderTextColor={colors.textSecondary}
-                              keyboardType="numeric"
-                              value={sMarks.halfYear !== null ? String(sMarks.halfYear) : ''}
-                              onChangeText={(val) => handleMarkChange(subject, 'halfYear', val)}
-                            />
-                          </View>
-                          <View style={styles.inputCol}>
-                  <Text style={styles.inputLabel}>Total</Text>
-                  <View style={[styles.scoreInput, styles.totalDisplay]}>
-                    <Text style={[
-                      styles.totalText,
-                      sMarks.total === null && styles.totalTextPlaceholder
-                    ]}>
-                      {sMarks.total !== null ? sMarks.total : '-'}
-                    </Text>
-                  </View>
-                </View>
-                        </View>
-                      </View>
-                    );
-                  })
-                )}
-
-              </View>
-            </ScrollView>
-          </View>
-
-          {/* FEES SECTION */}
-          <View key="fees" style={styles.page}>
-            <ScrollView 
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-            >
-              <View style={styles.innerSection}>
-                <Text style={[styles.sectionTitle, { marginLeft:3 }]}>Fees Payment</Text>
-
-                <View style={styles.feeForm}>
-                  <View style={styles.feeInputRow}>
-                    <Text style={styles.feeLabel}>1st Installment</Text>
-                    <TextInput
-                      style={styles.feeInput}
-                      placeholder="0"
-                      placeholderTextColor={colors.textSecondary}
-                      keyboardType="numeric"
-                      value={fees?.first ? String(fees.first) : ''}
-                      onChangeText={(val) => handleFeeChange('first', val)}
-                    />
-                  </View>
-
-                  <View style={styles.feeInputRow}>
-                    <Text style={styles.feeLabel}>2nd Installment</Text>
-                    <TextInput
-                      style={styles.feeInput}
-                      placeholder="0"
-                      placeholderTextColor={colors.textSecondary}
-                      keyboardType="numeric"
-                      value={fees?.second ? String(fees.second) : ''}
-                      onChangeText={(val) => handleFeeChange('second', val)}
-                    />
-                  </View>
-
-                  <View style={styles.feeInputRow}>
-                    <Text style={styles.feeLabel}>3rd Installment</Text>
-                    <TextInput
-                      style={styles.feeInput}
-                      placeholder="0"
-                      placeholderTextColor={colors.textSecondary}
-                      keyboardType="numeric"
-                      value={fees?.third ? String(fees.third) : ''}
-                      onChangeText={(val) => handleFeeChange('third', val)}
-                    />
-                  </View>
-
-                  <View style={styles.feeInputRow}>
-                    <Text style={styles.feeLabel}>4th Installment</Text>
-                    <TextInput
-                      style={styles.feeInput}
-                      placeholder="0"
-                      placeholderTextColor={colors.textSecondary}
-                      keyboardType="numeric"
-                      value={fees?.fourth ? String(fees.fourth) : ''}
-                      onChangeText={(val) => handleFeeChange('fourth', val)}
-                    />
-                  </View>
-                    
-                    <Text style={styles.feeTotalVal}>
-                      Total : {((fees?.first || 0) + (fees?.second || 0) + (fees?.third || 0) + (fees?.fourth || 0)).toLocaleString('en-IN')}
-                    </Text>
-                  
-                </View>
-              </View>
-            </ScrollView>
-          </View>
-
-          {/* PROGRESSION (PROMOTE) SECTION */}
-          <View key="promote" style={styles.page}>
-            <ScrollView 
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-            >
-              <View style={styles.innerSection}>
-                <Text style={styles.sectionTitle}>Move Class</Text>
-                <Text style={[styles.sectionSubtitle, { marginTop:-12 }]}>
-                  Promote student to their next class. Current marks and fees will reset and be archived in history.
-                </Text>
-
-                <View style={styles.promotionForm}>
-                  <Text style={styles.promoLabel}>New Class</Text>
-                  <TextInput
-                    style={styles.promoInput}
-                    placeholder="New Class (1-7)"
-                    placeholderTextColor={colors.textSecondary}
-                    keyboardType="numeric"
-                    value={promoStandard}
-                    onChangeText={setPromoStandard}
-                  />
-
-                  <TouchableOpacity style={[styles.promoteBtn, { marginTop:5 }]} onPress={handlePromoteStudent}>
-                    <Ionicons name="trending-up" size={18} color={colors.background} style={{ marginRight: 6 }} />
-                    <Text style={styles.promoteBtnText}>Promote Student</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </ScrollView>
-          </View>
-
-          {/* HISTORY SECTION */}
-          <View key="history" style={styles.page}>
-            <ScrollView 
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-            >
-              <View style={styles.innerSection}>
-                <Text style={[styles.sectionTitle, { marginLeft:4 }]}>Academic History</Text>
-
-                {(history || []).length === 0 ? (
-                  <View style={styles.emptyHistory}>
-                    <Ionicons name="file-tray-outline" size={40} color={colors.textSecondary} />
-                    <Text style={styles.emptyText}>No archived records available for this student.</Text>
-                  </View>
-                ) : (
-                  (history || []).map((record, index) => {
-                    const historyTotalFees = (record.fees?.first || 0) + (record.fees?.second || 0) + (record.fees?.third || 0) + (record.fees?.fourth || 0);
-                    const movedDate = new Date(record.movedAt).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                    });
-
-                    return (
-                      <View key={index} style={styles.historyCard}>
-                        <View style={styles.historyCardHeader}>
-                          <Text style={styles.historyCardTitle}>Class {record.standard}</Text>
-                          <Text style={styles.historyCardDate}>{movedDate}</Text>
-                        </View>
-
-                        {/* Marks table */}
-                        <Text style={styles.historySubTitle}>Academic Scores</Text>
-                        <View style={styles.historyTable}>
-                          <View style={[styles.tableRow, styles.tableHeader]}>
-                            <Text style={[styles.colSubject, styles.headerText]}>Subject</Text>
-                            <Text style={[styles.colMark, styles.headerText]}>Term-1</Text>
-                            <Text style={[styles.colMark, styles.headerText]}>Term-2</Text>
-                            <Text style={[styles.colMark, styles.headerText]}>Total</Text>
-                          </View>
-                          {(record.subjects || []).map((sub) => {
-                            const subMarks = record.marks?.[sub] || { quarter: null, halfYear: null, total: null };
-                            return (
-                              <View key={sub} style={styles.tableRow}>
-                                <Text style={styles.colSubject} numberOfLines={1}>{sub}</Text>
-                                <Text style={styles.colMark}>{subMarks.quarter !== null ? subMarks.quarter : '-'}</Text>
-                                <Text style={styles.colMark}>{subMarks.halfYear !== null ? subMarks.halfYear : '-'}</Text>
-                                <Text style={[styles.colMark,{ fontWeight:700 }]}>{subMarks.total !== null ? subMarks.total : '-'}</Text>
+          }}        
+>
+          {tabTypes.map((tab) => {
+            if (tab === 'marks') {
+              return (
+                <View key="marks" style={styles.page}>
+                  <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                    <View style={styles.innerSection}>
+                      <Text style={styles.sectionTitle}>Exam Marks</Text>
+                      {subjects.length === 0 ? (
+                        <Text style={styles.emptyText}>No subjects currently assigned.</Text>
+                      ) : (
+                        subjects.map((subject) => {
+                          const sMarks = marks[subject] || { quarter: null, halfYear: null, total: null };
+                          return (
+                            <View key={subject} style={styles.subjectMarkRow}>
+                              <Text style={styles.subjectName}>{subject}</Text>
+                              <View style={styles.inputsRow}>
+                                <View style={styles.inputCol}>
+                                  <Text style={styles.inputLabel}>Term-1</Text>
+                                  <TextInput
+                                    style={styles.scoreInput}
+                                    placeholder="-"
+                                    placeholderTextColor={colors.textSecondary}
+                                    keyboardType="numeric"
+                                    value={sMarks.quarter !== null ? String(sMarks.quarter) : ''}
+                                    onChangeText={(val) => handleMarkChange(subject, 'quarter', val)}
+                                    editable={!isViewMode}
+                                  />
+                                </View>
+                                <View style={styles.inputCol}>
+                                  <Text style={styles.inputLabel}>Term-2</Text>
+                                  <TextInput
+                                    style={styles.scoreInput}
+                                    placeholder="-"
+                                    placeholderTextColor={colors.textSecondary}
+                                    keyboardType="numeric"
+                                    value={sMarks.halfYear !== null ? String(sMarks.halfYear) : ''}
+                                    onChangeText={(val) => handleMarkChange(subject, 'halfYear', val)}
+                                    editable={!isViewMode}
+                                  />
+                                </View>
+                                <View style={styles.inputCol}>
+                                  <Text style={styles.inputLabel}>Total</Text>
+                                  <View style={[styles.scoreInput, styles.totalDisplay]}>
+                                    <Text style={[styles.totalText, sMarks.total === null && styles.totalTextPlaceholder]}>
+                                      {sMarks.total !== null ? sMarks.total : '-'}
+                                    </Text>
+                                  </View>
+                                </View>
                               </View>
-                            );
-                          })}
-                        </View>
+                            </View>
+                          );
+                        })
+                      )}
+                    </View>
+                  </ScrollView>
+                </View>
+              );
+                    }
 
-                        {/* Fees status */}
-                        <View style={styles.historyFeesRow}>
-                          <Text style={styles.historyFeesLabel}>Fees Paid for Class {record.standard}:</Text>
-                          <Text style={styles.historyFeesVal}>₹{historyTotalFees.toLocaleString('en-IN')}</Text>
+            if (tab === 'fees') {
+              return (
+                <View key="fees" style={styles.page}>
+                  <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                    <View style={styles.innerSection}>
+                      <Text style={[styles.sectionTitle, { marginLeft: 3 }]}>Fees Payment</Text>
+                      <View style={styles.feeForm}>
+                        <View style={styles.feeInputRow}>
+                          <Text style={styles.feeLabel}>1st Installment</Text>
+                          <TextInput
+                            style={styles.feeInput}
+                            placeholder="0"
+                            placeholderTextColor={colors.textSecondary}
+                            keyboardType="numeric"
+                            value={fees?.first ? String(fees.first) : ''}
+                            onChangeText={(val) => handleFeeChange('first', val)}
+                            editable={!isViewMode}
+                          />
                         </View>
+                        <View style={styles.feeInputRow}>
+                          <Text style={styles.feeLabel}>2nd Installment</Text>
+                          <TextInput
+                            style={styles.feeInput}
+                            placeholder="0"
+                            placeholderTextColor={colors.textSecondary}
+                            keyboardType="numeric"
+                            value={fees?.second ? String(fees.second) : ''}
+                            onChangeText={(val) => handleFeeChange('second', val)}
+                            editable={!isViewMode}
+                          />
+                        </View>
+                        <View style={styles.feeInputRow}>
+                          <Text style={styles.feeLabel}>3rd Installment</Text>
+                          <TextInput
+                            style={styles.feeInput}
+                            placeholder="0"
+                            placeholderTextColor={colors.textSecondary}
+                            keyboardType="numeric"
+                            value={fees?.third ? String(fees.third) : ''}
+                            onChangeText={(val) => handleFeeChange('third', val)}
+                            editable={!isViewMode}
+                          />
+                        </View>
+                        <View style={styles.feeInputRow}>
+                          <Text style={styles.feeLabel}>4th Installment</Text>
+                          <TextInput
+                            style={styles.feeInput}
+                            placeholder="0"
+                            placeholderTextColor={colors.textSecondary}
+                            keyboardType="numeric"
+                            value={fees?.fourth ? String(fees.fourth) : ''}
+                            onChangeText={(val) => handleFeeChange('fourth', val)}
+                            editable={!isViewMode}
+                          />
+                        </View>
+                        <Text style={styles.feeTotalVal}>
+                          Total : {((fees?.first || 0) + (fees?.second || 0) + (fees?.third || 0) + (fees?.fourth || 0)).toLocaleString('en-IN')}
+                        </Text>
                       </View>
-                    );
-                  })
-                )}
+                    </View>
+                  </ScrollView>
+                </View>
+              );
+            }
+
+            if (tab === 'promote') {
+              return (
+                <View key="promote" style={styles.page}>
+                  <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                    <View style={styles.innerSection}>
+                      <Text style={styles.sectionTitle}>Move Class</Text>
+                      <Text style={[styles.sectionSubtitle, { marginTop: -12 }]}>
+                        Promote student to their next class. Current marks and fees will reset and be archived in history.
+                      </Text>
+                      <View style={styles.promotionForm}>
+                        <Text style={styles.promoLabel}>New Class</Text>
+                        <TextInput
+                          style={styles.promoInput}
+                          placeholder="New Class (1-7)"
+                          placeholderTextColor={colors.textSecondary}
+                          keyboardType="numeric"
+                          value={promoStandard}
+                          onChangeText={setPromoStandard}
+                        />
+                        <TouchableOpacity style={[styles.promoteBtn, { marginTop: 5 }]} onPress={handlePromoteStudent}>
+                          <Ionicons name="trending-up" size={18} color={colors.background} style={{ marginRight: 6 }} />
+                          <Text style={styles.promoteBtnText}>Promote Student</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </ScrollView>
+                </View>
+              );
+                    }
+
+            // tab === 'history'
+            return (
+              <View key="history" style={styles.page}>
+                <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                  <View style={styles.innerSection}>
+                    <Text style={[styles.sectionTitle, { marginLeft: 4 }]}>Academic History</Text>
+                    {(history || []).length === 0 ? (
+                      <View style={styles.emptyHistory}>
+                        <Ionicons name="file-tray-outline" size={40} color={colors.textSecondary} />
+                        <Text style={styles.emptyText}>No archived records available for this student.</Text>
+                      </View>
+                    ) : (
+                      (history || []).map((record, index) => {
+                        const historyTotalFees = (record.fees?.first || 0) + (record.fees?.second || 0) + (record.fees?.third || 0) + (record.fees?.fourth || 0);
+                        const movedDate = new Date(record.movedAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                        });
+                        return (
+                          <View key={index} style={styles.historyCard}>
+                            <View style={styles.historyCardHeader}>
+                              <Text style={styles.historyCardTitle}>Class {record.standard}</Text>
+                              <Text style={styles.historyCardDate}>{movedDate}</Text>
+                            </View>
+                            <Text style={styles.historySubTitle}>Academic Scores</Text>
+                            <View style={styles.historyTable}>
+                              <View style={[styles.tableRow, styles.tableHeader]}>
+                                <Text style={[styles.colSubject, styles.headerText]}>Subject</Text>
+                                <Text style={[styles.colMark, styles.headerText]}>Term-1</Text>
+                                <Text style={[styles.colMark, styles.headerText]}>Term-2</Text>
+                                <Text style={[styles.colMark, styles.headerText]}>Total</Text>
+                              </View>
+                              {(record.subjects || []).map((sub) => {
+                                const subMarks = record.marks?.[sub] || { quarter: null, halfYear: null, total: null };
+                                return (
+                                  <View key={sub} style={styles.tableRow}>
+                                    <Text style={styles.colSubject} numberOfLines={1}>{sub}</Text>
+                                    <Text style={styles.colMark}>{subMarks.quarter !== null ? subMarks.quarter : '-'}</Text>
+                                    <Text style={styles.colMark}>{subMarks.halfYear !== null ? subMarks.halfYear : '-'}</Text>
+                                    <Text style={[styles.colMark, { fontWeight: 700 }]}>{subMarks.total !== null ? subMarks.total : '-'}</Text>
+                                  </View>
+                                );
+                              })}
+                            </View>
+                            <View style={styles.historyFeesRow}>
+                              <Text style={styles.historyFeesLabel}>Fees Paid for Class {record.standard}:</Text>
+                              <Text style={styles.historyFeesVal}>₹{historyTotalFees.toLocaleString('en-IN')}</Text>
+                            </View>
+                          </View>
+                        );
+                      })
+                    )}
+                  </View>
+                </ScrollView>
               </View>
-            </ScrollView>
-          </View>
+            );
+          })}
         </PagerView>
       </View>
     </View>

@@ -4,6 +4,7 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import EntryItem from '../../components/EntryItem';
+import { useAppMode } from '../../storage/appModeContext';
 import { clearAllEntries } from '../../storage/coreCrud';
 import { Entry } from '../../storage/typeEntry';
 import { colors, globalStyles } from '../../styles/global';
@@ -22,6 +23,9 @@ export default function AllEntriesScreen({ entries = [], searchVisible, setSearc
   const [headerHeight, setHeaderHeight] = useState(0);
 
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { mode } = useAppMode();
+  const isViewMode = mode === 'view';
+  
 
   // Trigger reload on focus to make sure newly added students appear
   useFocusEffect(
@@ -37,22 +41,25 @@ export default function AllEntriesScreen({ entries = [], searchVisible, setSearc
   };
 
   const handleClearAll = () => {
-    Alert.alert('Clear All Records!', 'Are you sure? This cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete All',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await clearAllEntries();
-            reload();
-          } catch (err) {
-            console.error('Failed to clear entries:', err);
-            Alert.alert('Error', 'Failed to delete some records. Try again.');
-          }
+    if(!isViewMode)
+    {
+      Alert.alert('Clear All Records!', 'Are you sure? This cannot be undone.', [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete All',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await clearAllEntries();
+              reload();
+            } catch (err) {
+              console.error('Failed to clear entries:', err);
+              Alert.alert('Error', 'Failed to delete some records. Try again.');
+            }
+          },
         },
-      },
-    ]);
+      ]);
+    }
   };
 
   const filtered = useMemo(() => {
@@ -92,7 +99,7 @@ export default function AllEntriesScreen({ entries = [], searchVisible, setSearc
         key={searchVisible ? 'search-open' : 'search-closed'}
         contentContainerStyle={{
           paddingHorizontal: 20,
-          paddingBottom: 140,
+          paddingBottom: 55,
           paddingTop: headerHeight + 10,
         }}
         data={filtered}
