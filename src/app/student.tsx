@@ -52,6 +52,8 @@ export default function StudentDetailScreen() {
     pagerRef.current?.setPage(index);
   };
 
+  
+
   useEffect(() => {
     async function loadStudent() {
       if (!id) return;
@@ -157,27 +159,19 @@ export default function StudentDetailScreen() {
   };
 
 
-const calculateTotal = (quarter: number | null, halfYear: number | null): number | null => {
-  if (quarter !== null && halfYear !== null) {
-    return quarter + halfYear;
-  }
-  return null;
-};
-
   const handleMarkChange = (subject: string, term: keyof SubjectMark, val: string) => {
   // Don't allow editing of total field
-  if (term === 'total') return;
   
   const trimmedVal = val.trim();
   
   // Allow clearing the field
   if (trimmedVal === '') {
-    const currentSubjectMarks = marks[subject] || { quarter: null, halfYear: null, total: null };
+    const currentSubjectMarks = marks[subject] || { quarter: null, halfYear: null, annual: null };
     const updatedTermMarks = {
       ...currentSubjectMarks,
       [term]: null,
     };
-    updatedTermMarks.total = calculateTotal(updatedTermMarks.quarter, updatedTermMarks.halfYear);
+    
     
     const updatedMarks = {
       ...marks,
@@ -198,7 +192,7 @@ const calculateTotal = (quarter: number | null, halfYear: number | null): number
     return; // prevent invalid inputs
   }
 
-  const currentSubjectMarks = marks[subject] || { quarter: null, halfYear: null, total: null };
+  const currentSubjectMarks = marks[subject] || { quarter: null, halfYear: null, annual: null };
   
   // Create updated marks with the new value
   const updatedTermMarks = {
@@ -207,7 +201,6 @@ const calculateTotal = (quarter: number | null, halfYear: number | null): number
   };
   
   // Auto-calculate total
-  updatedTermMarks.total = calculateTotal(updatedTermMarks.quarter, updatedTermMarks.halfYear);
 
   const updatedMarks = {
     ...marks,
@@ -240,6 +233,22 @@ const calculateTotal = (quarter: number | null, halfYear: number | null): number
 
   };
 
+  const sumSubjectMarks = (term: keyof SubjectMark): number | null => {
+  let hasAny = false;
+  const sum = subjects.reduce((acc, subj) => {
+    const val = marks[subj]?.[term];
+    if (val !== null && val !== undefined) {
+      hasAny = true;
+      return acc + val;
+    }
+    return acc;
+  }, 0);
+  return hasAny ? sum : null;
+};
+
+  const totalQuarter = sumSubjectMarks('quarter');
+  const totalHalfYear = sumSubjectMarks('halfYear');
+  const totalAnnual = sumSubjectMarks('annual');
 
   const handlePromoteStudent = () => {
     if (!promoStandard.trim() || isNaN(Number(promoStandard))) {
@@ -281,7 +290,7 @@ const calculateTotal = (quarter: number | null, halfYear: number | null): number
 
               // Initialize marks for new subjects
               const newMarks = newSubjects.reduce((acc, sub) => {
-              acc[sub] = { quarter: null, halfYear: null, total: null };
+              acc[sub] = { quarter: null, halfYear: null, annual: null };
               return acc;
               }, {} as Record<string, SubjectMark>);
 
@@ -298,12 +307,18 @@ const calculateTotal = (quarter: number | null, halfYear: number | null): number
               setStudent(promotedStudent);
               await updateEntry(promotedStudent);
           
-              
-
-              Alert.alert('Success', `Student promoted to Class ${newGrade}!`);
-              setTimeout(() => {
+              const marksIndex = tabTypes.indexOf('marks');
+    
+              // Update both activeTab and PagerView
               setActiveTab('marks');
+              
+              // Small delay to ensure state is updated before changing page
+              setTimeout(() => {
+                pagerRef.current?.setPage(marksIndex);
               }, 100);
+              
+              Alert.alert('Success', `Student promoted to Class ${newGrade}!`);
+              
             } catch (err) {
               console.error(err);
               Alert.alert('Error', 'Failed to process promotion.');
@@ -314,6 +329,7 @@ const calculateTotal = (quarter: number | null, halfYear: number | null): number
     );
   };
 
+  
   return (
   <KeyboardAvoidingView
     style={{ flex: 1, backgroundColor: colors.background }}
@@ -429,8 +445,9 @@ const calculateTotal = (quarter: number | null, halfYear: number | null): number
                       {subjects.length === 0 ? (
                         <Text style={styles.emptyText}>No subjects currently assigned.</Text>
                       ) : (
-                        subjects.map((subject) => {
-                          const sMarks = marks[subject] || { quarter: null, halfYear: null, total: null };
+                      <>
+                        { subjects.map((subject) => {
+                          const sMarks = marks[subject] || { quarter: null, halfYear: null, annual: null };
                           return (
                             <View key={subject} style={styles.subjectMarkRow}>
                               <Text style={styles.subjectName}>{subject}</Text>
@@ -460,17 +477,53 @@ const calculateTotal = (quarter: number | null, halfYear: number | null): number
                                   />
                                 </View>
                                 <View style={styles.inputCol}>
-                                  <Text style={styles.inputLabel}>Total</Text>
-                                  <View style={[styles.scoreInput, styles.totalDisplay]}>
-                                    <Text style={[styles.totalText, sMarks.total === null && styles.totalTextPlaceholder]}>
-                                      {sMarks.total !== null ? sMarks.total : '-'}
-                                    </Text>
-                                  </View>
+                                  <Text style={styles.inputLabel}>Term-3</Text>
+                                  <TextInput
+                                    style={styles.scoreInput}
+                                    placeholder="-"
+                                    placeholderTextColor={colors.textSecondary}
+                                    keyboardType="numeric"
+                                    value={sMarks.annual !== null ? String(sMarks.annual) : ''}
+                                    onChangeText={(val) => handleMarkChange(subject, 'annual', val)}
+                                    editable={!isViewMode}
+                                  />
                                 </View>
                               </View>
                             </View>
                           );
-                        })
+                        })}
+
+                        {/* TOTAL ROW — computed, read-only */}
+                        <View style={[styles.subjectMarkRow, { paddingTop: 8 }]}>
+                          <Text style={[styles.subjectName, { fontWeight: '700' }]}>Total</Text>
+                          <View style={styles.inputsRow}>
+                            <View style={styles.inputCol}>
+                              <Text style={styles.inputLabel}>Term-1</Text>
+                              <View style={styles.totalscoreInput}>
+                                <Text style={styles.totalText}>
+                                  {totalQuarter !== null ? totalQuarter : '-'}
+                                </Text>
+                              </View>
+                            </View>
+                            <View style={styles.inputCol}>
+                              <Text style={styles.inputLabel}>Term-2</Text>
+                              <View style={styles.totalscoreInput}>
+                                <Text style={styles.totalText}>
+                                  {totalHalfYear !== null ? totalHalfYear : '-'}
+                                </Text>
+                              </View>
+                            </View>
+                            <View style={styles.inputCol}>
+                              <Text style={styles.inputLabel}>Term-3</Text>
+                              <View style={styles.totalscoreInput}>
+                                <Text style={styles.totalText}>
+                                  {totalAnnual !== null ? totalAnnual : '-'}
+                                </Text>
+                              </View>
+                            </View>
+                          </View>
+                        </View>
+                      </>
                       )}
                     </View>
                   </ScrollView>
@@ -592,6 +645,25 @@ const calculateTotal = (quarter: number | null, halfYear: number | null): number
                           month: 'short',
                           day: 'numeric',
                         });
+                        // Compute academic totals for this history record
+                        const sumRecordMarks = (term: keyof SubjectMark): number | null => {
+                          let hasAny = false;
+                          const sum = (record.subjects || []).reduce((acc, sub) => {
+                            const val = record.marks?.[sub]?.[term];
+                            if (val !== null && val !== undefined) {
+                              hasAny = true;
+                              return acc + val;
+                            }
+                            return acc;
+                          }, 0);
+                          return hasAny ? sum : null;
+                        };
+                      
+                        const recordTotalQuarter = sumRecordMarks('quarter');
+                        const recordTotalHalfYear = sumRecordMarks('halfYear');
+                        const recordTotalAnnual = sumRecordMarks('annual');
+
+
                         return (
                           <View key={index} style={styles.historyCard}>
                             <View style={styles.historyCardHeader}>
@@ -604,19 +676,26 @@ const calculateTotal = (quarter: number | null, halfYear: number | null): number
                                 <Text style={[styles.colSubject, styles.headerText]}>Subject</Text>
                                 <Text style={[styles.colMark, styles.headerText]}>Term-1</Text>
                                 <Text style={[styles.colMark, styles.headerText]}>Term-2</Text>
-                                <Text style={[styles.colMark, styles.headerText]}>Total</Text>
+                                <Text style={[styles.colMark, styles.headerText]}>Term-3</Text>
                               </View>
                               {(record.subjects || []).map((sub) => {
-                                const subMarks = record.marks?.[sub] || { quarter: null, halfYear: null, total: null };
+                                const subMarks = record.marks?.[sub] || { quarter: null, halfYear: null, annual: null };
                                 return (
                                   <View key={sub} style={styles.tableRow}>
                                     <Text style={styles.colSubject} numberOfLines={1}>{sub}</Text>
                                     <Text style={styles.colMark}>{subMarks.quarter !== null ? subMarks.quarter : '-'}</Text>
                                     <Text style={styles.colMark}>{subMarks.halfYear !== null ? subMarks.halfYear : '-'}</Text>
-                                    <Text style={[styles.colMark, { fontWeight: 700 }]}>{subMarks.total !== null ? subMarks.total : '-'}</Text>
+                                    <Text style={styles.colMark}>{subMarks.annual !== null ? subMarks.annual : '-'}</Text>
                                   </View>
                                 );
                               })}
+                              {/* TOTAL ROW */}
+                              <View style={[styles.tableRow, { borderTopWidth: 1, borderTopColor: colors.textSecondary + '33' }]}>
+                                <Text style={[styles.colSubject, { fontWeight: '700' }]} numberOfLines={1}>Total</Text>
+                                <Text style={[styles.colMark, { fontWeight: '700' }]}>{recordTotalQuarter !== null ? recordTotalQuarter : '-'}</Text>
+                                <Text style={[styles.colMark, { fontWeight: '700' }]}>{recordTotalHalfYear !== null ? recordTotalHalfYear : '-'}</Text>
+                                <Text style={[styles.colMark, { fontWeight: '700' }]}>{recordTotalAnnual !== null ? recordTotalAnnual : '-'}</Text>
+                              </View>
                             </View>
                             <View style={styles.historyFeesRow}>
                               <Text style={styles.historyFeesLabel}>Fees Paid for Class {record.standard}:</Text>

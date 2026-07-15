@@ -72,7 +72,7 @@ export const addEntry = async (
     id,
     subjects: entry.subjects || [],
     marks: entry.marks || {},
-    fees: entry.fees || { quarter: 0, halfYear: 0, total: 0 },
+    fees: entry.fees || { first: 0, second: 0, third: 0, fourth: 0 },
     history: entry.history || [],
     profileImage: entry.profileImage || null,
     createdAt: new Date().toISOString(),

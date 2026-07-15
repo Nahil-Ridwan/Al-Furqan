@@ -1,7 +1,7 @@
 export type SubjectMark = {
   quarter: number | null;
   halfYear: number | null;
-  total: number | null;
+  annual: number | null;
 };
 
 export type TermFees = {

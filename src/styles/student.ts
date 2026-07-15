@@ -2,23 +2,24 @@ import { Platform, StyleSheet } from 'react-native';
 import { colors } from "./global";
 
 export const styles = StyleSheet.create({
+totalText: {
+  fontWeight: '700',
+  color: colors.primary,
+},
 
-  totalDisplay: {
+totalscoreInput: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 14,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.totalbox,
     borderColor: colors.totalboxborder,
   },
-  totalText: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  totalTextPlaceholder: {
-    color: colors.textSecondary,
-    fontWeight: '400',
-  },
+
+
 
   pagerView: {
     flex: 1,
@@ -212,7 +213,7 @@ export const styles = StyleSheet.create({
     borderRadius: 8,
   },
   tabButtonActive: {
-    backgroundColor: colors.primary + '45',
+    backgroundColor: colors.primary + '27',
   },
   tabText: {
     fontSize: 13,
@@ -282,15 +283,15 @@ export const styles = StyleSheet.create({
     marginBottom: 4,
   },
   scoreInput: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
     color: colors.text,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 8,
     fontSize: 14,
     textAlign: 'center',
+    backgroundColor: colors.inputbox,
+    borderColor: colors.inputboxborder,
   },
   saveBtn: {
     backgroundColor: colors.primary,

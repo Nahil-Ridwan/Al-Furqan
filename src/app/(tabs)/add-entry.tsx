@@ -104,7 +104,7 @@ export default function AddStudentScreen() {
 
     // Initialize blank marks mapping for the subjects
     const marksMapping = subjects.reduce((acc, sub) => {
-      acc[sub] = { quarter: null, halfYear: null, total: null };
+      acc[sub] = { quarter: null, halfYear: null, annual: null };
       return acc;
     }, {} as any);
 

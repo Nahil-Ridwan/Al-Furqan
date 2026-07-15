@@ -10,7 +10,7 @@ export const handleReport = async ( entry: Entry ) => {
   // Build marks summary for each subject
   let marksSummary = '*Subject*                   *term-1*  *term-2*   *Total*\n\n';
   entry.subjects.forEach((subject) => {
-    const subjectMarks = entry.marks[subject] || { quarter: null, halfYear: null, total: null };
+    const subjectMarks = entry.marks[subject] || { quarter: null, halfYear: null, annual: null };
 
     const formatNumber = (num: number | null) => {
   if (num === null) return '-'.padStart(3);
@@ -22,10 +22,10 @@ export const handleReport = async ( entry: Entry ) => {
 
     const quarter = formatNumber(subjectMarks.quarter)
     const halfYear = formatNumber(subjectMarks.halfYear)
-    const total = formatNumber(subjectMarks.total)
+    const annual = formatNumber(subjectMarks.annual)
     const paddedSubject = subject.padEnd(12, ' ');
     
-    marksSummary += `\`${paddedSubject} ${quarter}   ${halfYear}   ${total}\`\n`;
+    marksSummary += `\`${paddedSubject} ${quarter}   ${halfYear}   ${annual}\`\n`;
   });
   
   const message = `*Student Profile*

@@ -23,7 +23,7 @@ export const flattenHistory = (history: HistoricalRecord[]): { [key: string]: an
     Object.entries(record.marks).forEach(([subject, marks]) => {
       flat[`${prefix}_${subject}_term_1`] = marks.quarter;
       flat[`${prefix}_${subject}_term_2`] = marks.halfYear;
-      flat[`${prefix}_${subject}_total`] = marks.total;
+      flat[`${prefix}_${subject}_term_3`] = marks.annual;
     });
     
     // Flatten fees
@@ -51,7 +51,7 @@ export const parseHistory = (row: any): HistoricalRecord[] => {
       marks[subject] = {
         quarter: row[`${prefix}_${subject}_term_1`] !== undefined ? Number(row[`${prefix}_${subject}_term_1`]) : null,
         halfYear: row[`${prefix}_${subject}_term_2`] !== undefined ? Number(row[`${prefix}_${subject}_term_2`]) : null,
-        total: row[`${prefix}_${subject}_total`] !== undefined ? Number(row[`${prefix}_${subject}_total`]) : null,
+        annual: row[`${prefix}_${subject}_term_3`] !== undefined ? Number(row[`${prefix}_${subject}_term_3`]) : null,
       };
     });
     
@@ -80,7 +80,7 @@ export const flattenMarks = (marks: { [subjectName: string]: SubjectMark }): { [
   Object.entries(marks).forEach(([subject, subjectMarks]) => {
     flat[`${subject}_term_1`] = subjectMarks.quarter;
     flat[`${subject}term_2`] = subjectMarks.halfYear;
-    flat[`${subject}_total`] = subjectMarks.total;
+    flat[`${subject}_term_3`] = subjectMarks.annual;
   });
   return flat;
 };
@@ -92,7 +92,7 @@ export const parseMarks = (row: any, subjects: string[]): { [subjectName: string
     marks[subject] = {
       quarter: row[`${subject}_term_1`] !== undefined ? Number(row[`${subject}_term_1`]) : null,
       halfYear: row[`${subject}_term_2`] !== undefined ? Number(row[`${subject}_term_2`]) : null,
-      total: row[`${subject}_total`] !== undefined ? Number(row[`${subject}_total`]) : null,
+      annual: row[`${subject}_term_3`] !== undefined ? Number(row[`${subject}_term_3`]) : null,
     };
   });
   return marks;
