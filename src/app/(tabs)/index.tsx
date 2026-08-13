@@ -45,7 +45,9 @@ export default function HomeScreen({ entries = [], openAllEntriesWithSearch, rel
 
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView style={globalStyles.container}>
+      <ScrollView style={globalStyles.container}
+      showsVerticalScrollIndicator={false}
+      >
         <View style={globalStyles.header}>
           <Text style={globalStyles.title}>Al-Furqan</Text>
           {mode !== 'view' && (

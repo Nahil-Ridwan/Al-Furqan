@@ -100,6 +100,7 @@ export default function AllEntriesScreen({ entries = [], searchVisible, setSearc
       <KeyboardAvoidingView style={{flex:1}} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <FlashList
         key={searchVisible ? 'search-open' : 'search-closed'}
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingHorizontal: 20,
           paddingBottom: 55,

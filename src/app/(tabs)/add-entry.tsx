@@ -155,6 +155,7 @@ export default function AddStudentScreen() {
       <ScrollView
         style={globalStyles.container}
         contentContainerStyle={{ paddingBottom: 120 }}
+        showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
         <Text style={[globalStyles.title, { marginBottom: 20 }]}>Add Student</Text>
