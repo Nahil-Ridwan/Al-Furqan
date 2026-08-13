@@ -6,9 +6,13 @@ import { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Animated,
+  Easing,
   KeyboardAvoidingView,
+  LayoutAnimation,
   LayoutChangeEvent,
+  PanResponder,
   Platform,
+  ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
@@ -22,7 +26,6 @@ import { styles } from '../styles/student';
 import { useAppMode } from '../utility/appModeContext';
 import { formatDate } from '../utility/helpers';
 import { GRADE_SUBJECTS } from '../utility/subjectList';
-
 
 
 type TabType = 'marks' | 'fees' | 'promote' | 'history';
@@ -49,10 +52,17 @@ export default function StudentDetailScreen() {
     ? ['marks', 'fees', 'history']
     : ['marks', 'fees', 'promote', 'history'];
 
-  // Scroll animation setup for Profile Card collapse & fade out
-  const scrollY = useRef(new Animated.Value(0)).current;
+  // Swipe-based animation setup for Profile Card collapse & fade out
+  const collapseAnim = useRef(new Animated.Value(0)).current; // 0 = open, 1 = collapsed
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const isCollapsedRef = useRef(false);
+  const activeTabRef = useRef<TabType>('marks');
   const [profileHeight, setProfileHeight] = useState(260);
   const profileHeightMeasured = useRef(false);
+
+  useEffect(() => {
+    activeTabRef.current = activeTab;
+  }, [activeTab]);
 
   useEffect(() => {
     profileHeightMeasured.current = false;
@@ -65,6 +75,72 @@ export default function StudentDetailScreen() {
     history: 0,
   });
 
+  const collapseProfile = () => {
+    if (isCollapsedRef.current) return;
+    isCollapsedRef.current = true;
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    Animated.timing(collapseAnim, {
+      toValue: 1,
+      duration: 350,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const expandProfile = () => {
+    if (!isCollapsedRef.current) return;
+    isCollapsedRef.current = false;
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    Animated.timing(collapseAnim, {
+      toValue: 0,
+      duration: 350,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponderCapture: (_, gestureState) => {
+        const { dy, dx } = gestureState;
+        // Require dominant vertical gesture to avoid interfering with horizontal PagerView swiping
+        const isVertical = Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 10;
+        if (!isVertical) return false;
+
+        // 1. Profile is expanded: Swiping UP anywhere collapses profile card
+        if (dy < 0 && !isCollapsedRef.current) {
+          return true;
+        }
+
+        // 2. Profile is collapsed: Swiping DOWN when scroll is at start (<= 0) expands profile card
+        if (dy > 0 && isCollapsedRef.current) {
+          const currentY = scrollPositions.current[activeTabRef.current] || 0;
+          if (currentY <= 0) {
+            return true;
+          }
+        }
+
+        return false;
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        const { dy, vy } = gestureState;
+        if (dy < -10 || vy < -0.15) {
+          collapseProfile();
+        } else if (dy > 10 || vy > 0.15) {
+          expandProfile();
+        }
+      },
+      onPanResponderTerminate: (_, gestureState) => {
+        const { dy, vy } = gestureState;
+        if (dy < -10 || vy < -0.15) {
+          collapseProfile();
+        } else if (dy > 10 || vy > 0.15) {
+          expandProfile();
+        }
+      },
+    })
+  ).current;
+
   const onProfileLayout = (e: LayoutChangeEvent) => {
     if (profileHeightMeasured.current) return;
     const { height } = e.nativeEvent.layout;
@@ -74,28 +150,29 @@ export default function StudentDetailScreen() {
     }
   };
 
-  const handleScroll = Animated.event(
-    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-    {
-      useNativeDriver: false,
-      listener: (event: any) => {
-        const y = event?.nativeEvent?.contentOffset?.y || 0;
-        scrollPositions.current[activeTab] = y;
-      },
-    }
-  );
-
   const collapseDistance = Math.max(1, profileHeight);
 
-  const profileOpacity = scrollY.interpolate({
-    inputRange: [0, collapseDistance * 0.6, collapseDistance],
-    outputRange: [1, 0.2, 0],
+  const profileOpacity = collapseAnim.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [1, 0.3, 0],
     extrapolate: 'clamp',
   });
 
-  const profileHeightAnim = scrollY.interpolate({
-    inputRange: [0, collapseDistance],
-    outputRange: [profileHeight, 0],
+  const profileScale = collapseAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 0.85],
+    extrapolate: 'clamp',
+  });
+
+  const profileTranslateY = collapseAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -40],
+    extrapolate: 'clamp',
+  });
+
+  const profileHeightAnim = collapseAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [collapseDistance, 0],
     extrapolate: 'clamp',
   });
 
@@ -394,10 +471,8 @@ export default function StudentDetailScreen() {
   <KeyboardAvoidingView
     style={{ flex: 1, backgroundColor: colors.background }}
     behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-    enabled={Platform.OS === 'ios'}
   >
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }} {...panResponder.panHandlers}>
       {/* Header Section - Fixed */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
@@ -412,6 +487,10 @@ export default function StudentDetailScreen() {
         style={{
           height: profileHeightAnim,
           opacity: profileOpacity,
+          transform: [
+            { scale: profileScale },
+            { translateY: profileTranslateY },
+          ],
           overflow: 'hidden',
         }}
       >
@@ -576,22 +655,23 @@ export default function StudentDetailScreen() {
             const index = e.nativeEvent.position;
             const newTab = tabTypes[index];
             setActiveTab(newTab);
-            const targetY = scrollPositions.current[newTab] || 0;
-            Animated.timing(scrollY, {
-              toValue: targetY,
-              duration: 250,
-              useNativeDriver: false,
-            }).start();
           }}        
->
+        >
           {tabTypes.map((tab) => {
             if (tab === 'marks') {
               return (
                 <View key="marks" style={styles.page}>
-                  <Animated.ScrollView
+                  <ScrollView
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
-                    onScroll={handleScroll}
+                    contentContainerStyle={{ paddingBottom: 55 }}
+                    onScroll={(e) => {
+                      const y = e.nativeEvent.contentOffset.y;
+                      scrollPositions.current['marks'] = y;
+                      if (isCollapsedRef.current && y < -15) {
+                        expandProfile();
+                      }
+                    }}
                     scrollEventThrottle={16}
                   >
                     <View style={styles.innerSection}>
@@ -680,7 +760,7 @@ export default function StudentDetailScreen() {
                       </>
                       )}
                     </View>
-                  </Animated.ScrollView>
+                  </ScrollView>
                 </View>
               );
                     }
@@ -688,10 +768,17 @@ export default function StudentDetailScreen() {
             if (tab === 'fees') {
               return (
                 <View key="fees" style={styles.page}>
-                  <Animated.ScrollView
+                  <ScrollView
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
-                    onScroll={handleScroll}
+                    contentContainerStyle={{ paddingBottom: 120 }}
+                    onScroll={(e) => {
+                      const y = e.nativeEvent.contentOffset.y;
+                      scrollPositions.current['fees'] = y;
+                      if (isCollapsedRef.current && y < -15) {
+                        expandProfile();
+                      }
+                    }}
                     scrollEventThrottle={16}
                   >
                     <View style={styles.innerSection}>
@@ -750,7 +837,7 @@ export default function StudentDetailScreen() {
                         </Text>
                       </View>
                     </View>
-                  </Animated.ScrollView>
+                  </ScrollView>
                 </View>
               );
             }
@@ -758,10 +845,17 @@ export default function StudentDetailScreen() {
             if (tab === 'promote') {
               return (
                 <View key="promote" style={styles.page}>
-                  <Animated.ScrollView
+                  <ScrollView
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
-                    onScroll={handleScroll}
+                    contentContainerStyle={{ paddingBottom: 120 }}
+                    onScroll={(e) => {
+                      const y = e.nativeEvent.contentOffset.y;
+                      scrollPositions.current['promote'] = y;
+                      if (isCollapsedRef.current && y < -15) {
+                        expandProfile();
+                      }
+                    }}
                     scrollEventThrottle={16}
                   >
                     <View style={styles.innerSection}>
@@ -785,7 +879,7 @@ export default function StudentDetailScreen() {
                         </TouchableOpacity>
                       </View>
                     </View>
-                  </Animated.ScrollView>
+                  </ScrollView>
                 </View>
               );
                     }
@@ -793,10 +887,17 @@ export default function StudentDetailScreen() {
             // tab === 'history'
             return (
               <View key="history" style={styles.page}>
-                <Animated.ScrollView
+                <ScrollView
                   showsVerticalScrollIndicator={false}
                   keyboardShouldPersistTaps="handled"
-                  onScroll={handleScroll}
+                  contentContainerStyle={{ paddingBottom: 120 }}
+                  onScroll={(e) => {
+                    const y = e.nativeEvent.contentOffset.y;
+                    scrollPositions.current['history'] = y;
+                    if (isCollapsedRef.current && y < -15) {
+                      expandProfile();
+                    }
+                  }}
                   scrollEventThrottle={16}
                 >
                   <View style={styles.innerSection}>
@@ -875,7 +976,7 @@ export default function StudentDetailScreen() {
                       })
                     )}
                   </View>
-                </Animated.ScrollView>
+                </ScrollView>
               </View>
             );
           })}
