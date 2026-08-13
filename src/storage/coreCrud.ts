@@ -1,8 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { writeBatch } from 'firebase/firestore';
+import { db } from '../utility/firebaseConfig';
+import { studentsRef } from '../utility/helpers';
 import { CACHE_KEY, readCache, removeCacheEntry, updateCacheEntry } from './cacheService';
-import { db } from './firebaseConfig';
-import { studentsRef } from './helpers';
 import { addPendingMutation, PENDING_MUTATIONS_KEY, syncPendingMutations } from './offlineMutation';
 import { LAST_SYNC_KEY, notifySubscribers } from './subscription';
 import { Entry } from './typeEntry';

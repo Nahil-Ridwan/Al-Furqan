@@ -5,20 +5,22 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
   Alert,
+  Animated,
   KeyboardAvoidingView,
+  LayoutChangeEvent,
   Platform,
-  ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
   View
 } from 'react-native';
 import PagerView from 'react-native-pager-view';
-import { useAppMode } from '../storage/appModeContext';
 import { getEntryById, updateEntry } from '../storage/coreCrud';
 import { Entry, SubjectMark, TermFees } from '../storage/typeEntry';
 import { colors, globalStyles } from '../styles/global';
 import { styles } from '../styles/student';
+import { useAppMode } from '../utility/appModeContext';
+import { formatDate } from '../utility/helpers';
 import { GRADE_SUBJECTS } from '../utility/subjectList';
 
 
@@ -46,7 +48,57 @@ export default function StudentDetailScreen() {
   const tabTypes: TabType[] = isViewMode
     ? ['marks', 'fees', 'history']
     : ['marks', 'fees', 'promote', 'history'];
-  
+
+  // Scroll animation setup for Profile Card collapse & fade out
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const [profileHeight, setProfileHeight] = useState(260);
+  const profileHeightMeasured = useRef(false);
+
+  useEffect(() => {
+    profileHeightMeasured.current = false;
+  }, [id]);
+
+  const scrollPositions = useRef<Record<TabType, number>>({
+    marks: 0,
+    fees: 0,
+    promote: 0,
+    history: 0,
+  });
+
+  const onProfileLayout = (e: LayoutChangeEvent) => {
+    if (profileHeightMeasured.current) return;
+    const { height } = e.nativeEvent.layout;
+    if (height > 50) {
+      profileHeightMeasured.current = true;
+      setProfileHeight(height);
+    }
+  };
+
+  const handleScroll = Animated.event(
+    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+    {
+      useNativeDriver: false,
+      listener: (event: any) => {
+        const y = event?.nativeEvent?.contentOffset?.y || 0;
+        scrollPositions.current[activeTab] = y;
+      },
+    }
+  );
+
+  const collapseDistance = Math.max(1, profileHeight);
+
+  const profileOpacity = scrollY.interpolate({
+    inputRange: [0, collapseDistance * 0.6, collapseDistance],
+    outputRange: [1, 0.2, 0],
+    extrapolate: 'clamp',
+  });
+
+  const profileHeightAnim = scrollY.interpolate({
+    inputRange: [0, collapseDistance],
+    outputRange: [profileHeight, 0],
+    extrapolate: 'clamp',
+  });
+
   const handleTabPress = (tab: TabType) => {
     const index = tabTypes.indexOf(tab);
     pagerRef.current?.setPage(index);
@@ -101,7 +153,15 @@ export default function StudentDetailScreen() {
   return () => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
   };
-  }, [student?.marks, student?.fees]);
+  }, [student?.marks,
+      student?.fees,
+      student?.name,
+      student?.regno,
+      student?.dob,
+      student?.standard,
+      student?.guardian,
+      student?.mobile,
+    ]);
 
   // Sync PagerView when activeTab changes programmatically
 
@@ -126,7 +186,7 @@ export default function StudentDetailScreen() {
     );
   }
 
-  const { name, regno, mobile, standard, profileImage, subjects = [], marks = {}, fees, history = [] } = student;
+  const { name, regno, dob, mobile, standard, guardian, profileImage, subjects = [], marks = {}, fees, history = [] } = student;
 
   const handleProfileImageChange = async () => {
     try {
@@ -316,7 +376,7 @@ export default function StudentDetailScreen() {
               setTimeout(() => {
                 pagerRef.current?.setPage(marksIndex);
               }, 100);
-              
+              setPromoStandard('');
               Alert.alert('Success', `Student promoted to Class ${newGrade}!`);
               
             } catch (err) {
@@ -347,62 +407,144 @@ export default function StudentDetailScreen() {
         <View style={{ width: 24 }} />
       </View>
 
-      {/* Scrollable Top Content */}
-      <ScrollView 
-        style={{ flexGrow: 0 }}  // Don't take all space
-        contentContainerStyle={{ paddingBottom: 10 }}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+      {/* Animated Profile Card (Upper Part) */}
+      <Animated.View
+        style={{
+          height: profileHeightAnim,
+          opacity: profileOpacity,
+          overflow: 'hidden',
+        }}
       >
-        {/* Profile Card */}
-        <View style={styles.profileCard}>
-          <View style={styles.profileHorizontalLayout}>
-            {/* Left Side - Details Stacked Vertically */}
-            <View style={styles.profileDetailsColumn}>
-              <Text style={styles.studentName}>{name}</Text>
-              
-              <View style={styles.detailsStack}>
-                <View style={styles.detailRow}>
-                  <Ionicons name="document-text-outline" size={16} color={colors.textSecondary} />
-                  <Text style={styles.detailText}>#{regno}</Text>
-                </View>
-                
-                <View style={styles.detailRow}>
-                  <Ionicons name="school-outline" size={16} color={colors.textSecondary} />
-                  <Text style={styles.detailText}>Class {standard}</Text>
-                </View>
-                
-                <View style={styles.detailRow}>
-                  <Ionicons name="call-outline" size={16} color={colors.textSecondary} />
-                  <Text style={styles.detailText}>{mobile}</Text>
-                </View>
-              </View>
-            </View>
-
-            {/* Right Side - Profile Image */}
+        <View
+          onLayout={onProfileLayout}
+          style={{
+            paddingHorizontal: 16,
+            paddingTop: 4,
+            paddingBottom: 16,
+          }}
+        >
+          {/* Profile Card */}
+          <View style={[styles.profileCard, { margin: 0 }]}>
+            {/* Top - Avatar centered with ring */}
             <TouchableOpacity 
               onPress={handleProfileImageChange} 
               disabled={isViewMode}
-              style={styles.profileImageContainer}
+              style={styles.avatarRingContainer}
             >
-              {profileImage ? (
-                <Image source={{ uri: profileImage }} style={styles.profileImage} />
-              ) : (
-                <View style={[styles.profileImage, styles.profileImagePlaceholder]}>
-                  <Text style={styles.avatarText}>
-                    {name ? name.charAt(0).toUpperCase() : '?'}
-                  </Text>
-                </View>
-              )}
+              <View style={styles.avatarRing}>
+                {profileImage ? (
+                  <Image source={{ uri: profileImage }} style={styles.profileImage} />
+                ) : (
+                  <View style={[styles.profileImage, styles.profileImagePlaceholder]}>
+                    <Text style={styles.avatarText}>
+                      {name ? name.charAt(0).toUpperCase() : '?'}
+                    </Text>
+                  </View>
+                )}
+              </View>
               {!isViewMode && (
                 <View style={styles.editBadge}>
                   <Ionicons name="camera" size={14} color={colors.background} />
                 </View>
               )}
             </TouchableOpacity>
+          
+            {/* Name */}
+              <TextInput
+                style={styles.studentNameCentered}
+                value={name}
+                onChangeText={(text) => setStudent({ ...student, name: text })}
+                placeholder='Full Name'
+                placeholderTextColor={colors.textSecondary}
+                textAlign="center"
+                editable={!isViewMode}
+              />
+          
+            {/* Subtitle - class */}
+              <View style={styles.tagRow}>
+              <TextInput
+                style={styles.subtitleCentered}
+                value={String('Class '+standard)}
+                keyboardType='numeric'
+                onChangeText={(text) => setStudent({ ...student, standard: Number(text) })}
+                placeholder='Class'
+                placeholderTextColor={colors.textSecondary}
+                textAlign="center"
+                editable={!isViewMode}
+              />
+          
+            {/* Tag-style pills row */}
+          
+          
+              <View style={styles.tagPill}>
+                <Text style={{ color: colors.text}}>#</Text>
+                  <TextInput
+                    style={styles.tagText}
+                    value={String(regno)}
+                    keyboardType='numeric'
+                    onChangeText={(text) => setStudent({ ...student, regno: Number(text) })}
+                    placeholder='reg no'
+                    placeholderTextColor={colors.textSecondary}
+                    editable={!isViewMode}
+                  />
+              </View>
+          
+            </View>
+          
+            {/* Stats row - DOB & Mobile shown like Rating/Earned/Rate */}
+            <View style={styles.statsRow}>
+          
+              <View style={styles.statItem}>
+                <Ionicons name="calendar-outline" size={16} color={colors.text} />
+                  <TextInput
+                    style={styles.statValue}
+                    value={dob}
+                    onChangeText={(text) => {
+                      const date = formatDate(text);
+                      setStudent({ ...student, dob: String(date) });
+                    }}
+                    placeholder='Date of birth'
+                    placeholderTextColor={colors.textSecondary}
+                    textAlign="center"
+                    editable={!isViewMode}
+                  />
+              </View>
+          
+              <View style={styles.statDivider} />
+          
+              <View style={styles.statItem}>
+                <Ionicons name="person-outline" size={16} color={colors.text} />
+                  <TextInput
+                    style={styles.statValue}
+                    value={guardian}
+                    onChangeText={(text) => setStudent({ ...student, guardian: text })}
+                    placeholder='Guardian'
+                    placeholderTextColor={colors.textSecondary}
+                    textAlign="center"
+                    editable={!isViewMode}
+                  />
+              </View>
+          
+              <View style={styles.statDivider} />
+          
+              <View style={styles.statItem}>
+                <Ionicons name="call-outline" size={16} color={colors.text} />
+                  <TextInput
+                    style={styles.statValue}
+                    value={String(mobile)}
+                    keyboardType='numeric'
+                    onChangeText={(text) => setStudent({ ...student, mobile: Number(text) })}
+                    placeholder='Mobile'
+                    placeholderTextColor={colors.textSecondary}
+                    textAlign="center"
+                    editable={!isViewMode}
+                  />
+              </View>
+            </View>
+          
           </View>
         </View>
-      </ScrollView>
+      </Animated.View>
 
       {/* Custom Tab Segment */}
       <View style={styles.tabContainer}>
@@ -432,14 +574,26 @@ export default function StudentDetailScreen() {
           initialPage={0}
           onPageSelected={(e) => {
             const index = e.nativeEvent.position;
-            setActiveTab(tabTypes[index]);
+            const newTab = tabTypes[index];
+            setActiveTab(newTab);
+            const targetY = scrollPositions.current[newTab] || 0;
+            Animated.timing(scrollY, {
+              toValue: targetY,
+              duration: 250,
+              useNativeDriver: false,
+            }).start();
           }}        
 >
           {tabTypes.map((tab) => {
             if (tab === 'marks') {
               return (
                 <View key="marks" style={styles.page}>
-                  <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                  <Animated.ScrollView
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                    onScroll={handleScroll}
+                    scrollEventThrottle={16}
+                  >
                     <View style={styles.innerSection}>
                       <Text style={styles.sectionTitle}>Exam Marks</Text>
                       {subjects.length === 0 ? (
@@ -526,7 +680,7 @@ export default function StudentDetailScreen() {
                       </>
                       )}
                     </View>
-                  </ScrollView>
+                  </Animated.ScrollView>
                 </View>
               );
                     }
@@ -534,7 +688,12 @@ export default function StudentDetailScreen() {
             if (tab === 'fees') {
               return (
                 <View key="fees" style={styles.page}>
-                  <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                  <Animated.ScrollView
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                    onScroll={handleScroll}
+                    scrollEventThrottle={16}
+                  >
                     <View style={styles.innerSection}>
                       <Text style={[styles.sectionTitle, { marginLeft: 3 }]}>Fees Payment</Text>
                       <View style={styles.feeForm}>
@@ -591,7 +750,7 @@ export default function StudentDetailScreen() {
                         </Text>
                       </View>
                     </View>
-                  </ScrollView>
+                  </Animated.ScrollView>
                 </View>
               );
             }
@@ -599,7 +758,12 @@ export default function StudentDetailScreen() {
             if (tab === 'promote') {
               return (
                 <View key="promote" style={styles.page}>
-                  <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                  <Animated.ScrollView
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                    onScroll={handleScroll}
+                    scrollEventThrottle={16}
+                  >
                     <View style={styles.innerSection}>
                       <Text style={styles.sectionTitle}>Move Class</Text>
                       <Text style={[styles.sectionSubtitle, { marginTop: -12 }]}>
@@ -621,7 +785,7 @@ export default function StudentDetailScreen() {
                         </TouchableOpacity>
                       </View>
                     </View>
-                  </ScrollView>
+                  </Animated.ScrollView>
                 </View>
               );
                     }
@@ -629,7 +793,12 @@ export default function StudentDetailScreen() {
             // tab === 'history'
             return (
               <View key="history" style={styles.page}>
-                <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                <Animated.ScrollView
+                  showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
+                  onScroll={handleScroll}
+                  scrollEventThrottle={16}
+                >
                   <View style={styles.innerSection}>
                     <Text style={[styles.sectionTitle, { marginLeft: 4 }]}>Academic History</Text>
                     {(history || []).length === 0 ? (
@@ -706,7 +875,7 @@ export default function StudentDetailScreen() {
                       })
                     )}
                   </View>
-                </ScrollView>
+                </Animated.ScrollView>
               </View>
             );
           })}

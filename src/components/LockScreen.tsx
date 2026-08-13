@@ -9,8 +9,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useAppMode } from '../storage/appModeContext';
 import { colors } from '../styles/global';
+import { useAppMode } from '../utility/appModeContext';
 
 export default function LockScreen() {
   const { setMode } = useAppMode();
@@ -19,10 +19,10 @@ export default function LockScreen() {
   
 
   const handleUnlock = () => {
-    const trimmed = password.trim().toLowerCase();
-    if (trimmed === 'view') {
+    const trimmed = password.trim();
+    if (trimmed === 'Teacher') {
       setMode('view');
-    } else if (trimmed === 'edit') {
+    } else if (trimmed === 'Boss123') {
       setMode('edit');
     } else {
       setError('Invalid password. Try again.');
@@ -80,6 +80,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 24,
   },
+  
   card: {
     width: '100%',
     maxWidth: 360,
@@ -91,6 +92,7 @@ const styles = StyleSheet.create({
     padding: 28,
     alignItems: 'center',
   },
+
   iconContainer: {
     width: 80,
     height: 80,
@@ -100,6 +102,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
+
   title: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -107,12 +110,14 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     textAlign: 'center',
   },
+
   subtitle: {
     fontSize: 14,
     color: colors.textSecondary,
     marginBottom: 24,
     textAlign: 'center',
   },
+
   input: {
     width: '100%',
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
@@ -126,9 +131,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     textAlign: 'center',
   },
+
   inputError: {
     borderColor: colors.alert,
   },
+
   errorText: {
     color: colors.alert,
     fontSize: 13,
@@ -136,6 +143,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     textAlign: 'center',
   },
+
   button: {
     width: '100%',
     backgroundColor: colors.primary,
@@ -145,11 +153,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 16,
   },
+
   buttonText: {
     color: colors.background,
     fontSize: 16,
     fontWeight: 'bold',
   },
+
   footerText: {
     fontSize: 12,
     color: colors.textSecondary,

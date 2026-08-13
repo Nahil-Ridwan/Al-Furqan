@@ -4,11 +4,11 @@ import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAppMode } from '../../storage/appModeContext';
-import { getEntries } from '../../storage/helpers';
 import { subscribeToEntries } from '../../storage/subscription';
 import { Entry } from '../../storage/typeEntry';
 import { colors } from '../../styles/global';
+import { useAppMode } from '../../utility/appModeContext';
+import { getEntries } from '../../utility/helpers';
 
 
 import NetworkToast from '../../components/NetworkToast';
@@ -194,11 +194,13 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.12)',
     backgroundColor: colors.surface,
   },
+
   tabItem: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
+
   iconWrapper: {
     width: 40,
     height: 32,
@@ -206,6 +208,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  
   iconWrapperFocused: {
     backgroundColor: `${colors.primary}22`,
     borderRadius:13,

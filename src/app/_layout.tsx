@@ -1,8 +1,8 @@
 import { Stack } from 'expo-router';
 import { View } from 'react-native';
 import LockScreen from '../components/LockScreen';
-import { AppModeProvider, useAppMode } from '../storage/appModeContext';
 import { colors } from '../styles/global';
+import { AppModeProvider, useAppMode } from '../utility/appModeContext';
 
 function RootContent() {
   const { mode } = useAppMode();

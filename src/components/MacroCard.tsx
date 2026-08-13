@@ -42,6 +42,7 @@ const styles = StyleSheet.create({
     borderRightWidth: 4,
     marginBottom: 4,
   },
+
   label: {
     fontSize: 13,
     color: '#a0a0b0',
@@ -49,17 +50,20 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
+
   value: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#ffffff',
     marginTop: 6,
   },
+
   subtext: {
     fontSize: 12,
     color: '#7a7a9a',
     marginTop: 4,
   },
+  
   iconContainer: {
     position: 'absolute',
     right: 12,

@@ -1,7 +1,8 @@
 import { collection } from "firebase/firestore";
-import { readCache } from "./cacheService";
+import * as XLSX from 'xlsx';
+import { readCache } from "../storage/cacheService";
+import { Entry, HistoricalRecord, SubjectMark } from '../storage/typeEntry';
 import { db } from "./firebaseConfig";
-import { Entry, HistoricalRecord, SubjectMark } from './typeEntry';
 
 export const studentsRef = collection(db, 'students');
 
@@ -9,6 +10,87 @@ export const getEntries = async (): Promise<Entry[]> => {
   const cached = await readCache();
   return cached;
 };
+
+// date handliing
+
+export const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+
+export const monthMap: Record<string, number> = {
+  JAN: 0, FEB: 1, MAR: 2, APR: 3, MAY: 4, JUN: 5,
+  JUL: 6, AUG: 7, SEP: 8, OCT: 9, NOV: 10, DEC: 11,
+};
+
+export const formatDateOutput = (date: Date): string => {
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = MONTHS[date.getMonth()];
+  const year = String(date.getFullYear()).slice(-2);
+  return `${day}-${month}-${year}`;
+};
+
+export const formatDate = (val?: string): string | undefined => {
+    if (!val) return '';
+    const parts = val.trim().split(/[\s-.]+/);
+    if (parts.length === 3) {
+      const [day, month, year] = parts;
+      const monthIndex = isNaN(Number(month))
+        ? monthMap[month.toUpperCase()]
+        : Number(month) - 1;
+      if (monthIndex === undefined || isNaN(monthIndex)) return val;
+      const yearNum = year.length === 2 ? 2000 + Number(year) : Number(year);
+      const date = new Date(yearNum, monthIndex, Number(day));
+      if (!isNaN(date.getTime())) {
+        return formatDateOutput(date)
+      }
+    }
+    return val;
+};
+
+export const parseAppDate = (dateStr?: string): Date | undefined => {
+  if (!dateStr) return undefined;
+  const parts = dateStr.trim().split('-');
+  if (parts.length !== 3) return undefined;
+  const [day, month, year] = parts;
+  const monthIndex = monthMap[month.toUpperCase()];
+  if (monthIndex === undefined) return undefined;
+  return new Date(2000 + Number(year), monthIndex, Number(day));
+};
+
+export const formatDateimport = (val?: any): string | undefined => {
+  if (!val) return undefined;
+
+  if (typeof val === 'number') {
+    const date = XLSX.SSF.parse_date_code(val);
+    if (date) {
+      const d = new Date(date.y, date.m - 1, date.d);
+      return formatDateOutput(d);
+    }
+  }
+
+
+  
+  const str = String(val).trim();
+
+  const slashParts = str.split('/');
+  if (slashParts.length === 3) {
+    const [a, b, c] = slashParts;
+    const date = new Date(`${c}-${b.padStart(2, '0')}-${a.padStart(2, '0')}`);
+    if (!isNaN(date.getTime())) return formatDateOutput(date);
+    const date2 = new Date(`${c}-${a.padStart(2, '0')}-${b.padStart(2, '0')}`);
+    if (!isNaN(date2.getTime())) return formatDateOutput(date2);
+  }
+
+  const parts = str.split(/[\s-]+/);
+  if (parts.length === 3) {
+    const [day, month, year] = parts;
+    const monthIndex = isNaN(Number(month)) ? monthMap[month.toUpperCase()] : Number(month) - 1;
+    if (monthIndex === undefined || isNaN(monthIndex)) return str;
+    const date = new Date(2000 + Number(year), monthIndex, Number(day));
+    if (!isNaN(date.getTime())) return formatDateOutput(date);
+  }
+
+  return str;
+}
+
 
 // Helper to flatten historical records for Excel export
 export const flattenHistory = (history: HistoricalRecord[]): { [key: string]: any } => {

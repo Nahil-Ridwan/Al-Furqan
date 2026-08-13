@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import { doc, setDoc } from 'firebase/firestore';
 import { AppState, AppStateStatus } from 'react-native';
-import { studentsRef } from './helpers';
+import { studentsRef } from '../utility/helpers';
 import { Entry } from './typeEntry';
 
 export const PENDING_MUTATIONS_KEY = 'pending_mutations';

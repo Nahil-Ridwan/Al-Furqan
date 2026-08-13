@@ -3,11 +3,12 @@ import { FlashList } from '@shopify/flash-list';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import Animated, { LinearTransition, ZoomIn, ZoomOut } from 'react-native-reanimated';
 import EntryItem from '../../components/EntryItem';
-import { useAppMode } from '../../storage/appModeContext';
 import { clearAllEntries } from '../../storage/coreCrud';
 import { Entry } from '../../storage/typeEntry';
 import { colors, globalStyles } from '../../styles/global';
+import { useAppMode } from '../../utility/appModeContext';
 
 type Props = {
   entries: Entry[];
@@ -71,6 +72,8 @@ export default function AllEntriesScreen({ entries = [], searchVisible, setSearc
           String(entry.mobile ?? '').toLowerCase().includes(q) ||
           String(entry.regno ?? '').toLowerCase().includes(q) ||
           String(entry.active ?? '').toLowerCase().includes(q) ||
+          String(entry.dob ?? '').toLowerCase().includes(q) ||
+          String(entry.guardian ?? '').toLowerCase().includes(q) ||
           String(entry.standard ?? '').toLowerCase().includes(q));
           
       
@@ -121,8 +124,9 @@ export default function AllEntriesScreen({ entries = [], searchVisible, setSearc
       </KeyboardAvoidingView>
 
       {/* Header — absolutely positioned so list scrolls behind it */}
-      <View
+      <Animated.View
         style={styles.header}
+        layout={LinearTransition}
         onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
       >
         <View style={globalStyles.header}>
@@ -143,32 +147,38 @@ export default function AllEntriesScreen({ entries = [], searchVisible, setSearc
         </View>
 
         {searchVisible && (
-          <View style={styles.searchRow}>
-            <TextInput
-              style={[styles.searchInput, { flex: 2 }]}
-              placeholder="Search Students"
-              placeholderTextColor={colors.textSecondary}
-              value={query}
-              onChangeText={handleSearch}
-              autoFocus
-            />
-            <TextInput
-              style={[styles.searchInput, { flex: 1 }]}
-              placeholder="Class"
-              placeholderTextColor={colors.textSecondary}
-              keyboardType="numeric"
-              value={filterStandard}
-              onChangeText={setFilterStandard}
-            />
-          </View>
+          <Animated.View 
+            entering={ZoomIn.duration(200)}
+            exiting={ZoomOut.duration(150)}
+            style={styles.searchRow}>
+              <TextInput
+                style={[styles.searchInput, { flex: 2 }]}
+                placeholder="Search Students"
+                placeholderTextColor={colors.textSecondary}
+                value={query}
+                onChangeText={handleSearch}
+                autoFocus
+              />
+              <TextInput
+                style={[styles.searchInput, { flex: 1 }]}
+                placeholder="Class"
+                placeholderTextColor={colors.textSecondary}
+                keyboardType="numeric"
+                value={filterStandard}
+                onChangeText={setFilterStandard}
+              />
+          </Animated.View>
         )}
 
         {searchVisible && (
-          <Text style={styles.resultsCount}>
-            Showing {filtered.length} student{filtered.length !== 1 ? 's...' : '...'}
-          </Text>
+          <Animated.Text 
+            entering={ZoomIn.duration(200)}
+            exiting={ZoomOut.duration(150)}
+            style={styles.resultsCount}>
+              Showing {filtered.length} student{filtered.length !== 1 ? 's...' : '...'}
+          </Animated.Text>
         )}
-      </View>
+      </Animated.View>
     </View>
   );
 }
@@ -183,11 +193,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.06)',
   },
+  
   searchRow: {
     flexDirection: 'row',
     gap: 8,
     marginTop: 0,
   },
+
   header: {
     position: 'absolute',
     top: 0,
@@ -198,10 +210,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 12,
     zIndex: 10,
-    elevation: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
   },
+
   resultsCount: {
     color: colors.textSecondary,
     fontSize: 13,
@@ -210,6 +220,7 @@ const styles = StyleSheet.create({
     marginLeft: 6,
     fontWeight: '500',
   },
+
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',

@@ -2,10 +2,10 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useAppMode } from '../storage/appModeContext';
 import { deleteEntry, updateEntry } from '../storage/coreCrud';
 import { Entry } from '../storage/typeEntry';
 import { colors } from '../styles/global';
+import { useAppMode } from '../utility/appModeContext';
 import CustomActionSheet from './ActionSheet';
 
 import DialButton from './DialButton';
@@ -103,7 +103,6 @@ export default function EntryItem({ student, onDelete }: EntryItemProps) {
         <View style={styles.info}>
           <View style={styles.nameRow}>
             <Text style={styles.name} numberOfLines={1}>{name}</Text>
-            <Text style={styles.regNo}>#{regno}</Text>
           </View>
           
           <View style={styles.detailRow}>
@@ -190,17 +189,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.06)',
   },
+  
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
+
   avatar: {
     width: 54,
     height: 54,
     borderRadius: 27,
     backgroundColor: '#3a3a5e',
   },
+
   defaultAvatar: {
     justifyContent: 'center',
     alignItems: 'center',
@@ -208,27 +210,32 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: colors.primary,
   },
+
   avatarText: {
     color: colors.primary,
     fontSize: 20,
     fontWeight: 'bold',
   },
+
   info: {
     flex: 1,
     justifyContent: 'center',
   },
+
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     marginBottom: 4,
   },
+
   name: {
     fontSize: 16,
     fontWeight: 'bold',
     color: colors.text,
     maxWidth: '75%',
   },
+
   regNo: {
     fontSize: 12,
     color: colors.primary,
@@ -238,38 +245,46 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 6,
   },
+
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     marginBottom: 8,
   },
+
   detailText: {
     fontSize: 13,
     color: colors.textSecondary,
   },
+
   divider: {
     color: 'rgba(255,255,255,0.2)',
     marginHorizontal: 2,
   },
+
   badgeRow: {
     flexDirection: 'row',
     gap: 8,
   },
+
   badge: {
     backgroundColor: 'rgba(255,255,255,0.08)',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
   },
+
   badgeText: {
     fontSize: 11,
     color: colors.textSecondary,
     fontWeight: '600',
   },
+
   feeBadge: {
     backgroundColor: '#6bcb7722',
   },
+
   feeBadgeText: {
     color: '#6bcb77',
   },

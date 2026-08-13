@@ -5,10 +5,10 @@ import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import HomeHeader from '../../components/HomeHeader';
 import MacroGrid from '../../components/MacroGrid';
 import RecentEntries from '../../components/RecentEntries';
-import { exportEntries, pickAndImportEntries } from '../../storage/importExport';
-import { useAppMode } from '../../storage/appModeContext';
 import { Entry } from '../../storage/typeEntry';
 import { colors, globalStyles } from '../../styles/global';
+import { useAppMode } from '../../utility/appModeContext';
+import { exportEntries, pickAndImportEntries } from '../../utility/importExport';
 
 type Props = {
   entries: Entry[];

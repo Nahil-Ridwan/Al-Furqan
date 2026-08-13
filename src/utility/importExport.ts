@@ -3,12 +3,12 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { doc, writeBatch } from 'firebase/firestore';
 import * as XLSX from 'xlsx';
-import { readCache, writeCache } from './cacheService';
+import { readCache, writeCache } from '../storage/cacheService';
+import { addPendingMutations, removePendingMutations, syncPendingMutations, } from '../storage/offlineMutation';
+import { notifySubscribers } from '../storage/subscription';
+import { Entry, TermFees } from '../storage/typeEntry';
+import { flattenHistory, flattenMarks, formatDateimport, getEntries, parseAppDate, parseHistory, parseMarks, studentsRef } from '../utility/helpers';
 import { db } from './firebaseConfig';
-import { flattenHistory, flattenMarks, getEntries, parseHistory, parseMarks, studentsRef } from './helpers';
-import { addPendingMutations, removePendingMutations, syncPendingMutations, } from './offlineMutation';
-import { notifySubscribers } from './subscription';
-import { Entry, TermFees } from './typeEntry';
 
 
 // ---- Export to Excel ----
@@ -24,8 +24,10 @@ export const exportEntries = async (): Promise<void> => {
       id: e.id,
       name: e.name,
       regno: e.regno,
+      dob: parseAppDate(e.dob),
       mobile: e.mobile,
       standard: e.standard,
+      guardian: e.guardian,
       active: e.active,
       profileImage: e.profileImage || '',
       subjects: e.subjects.join(', '),
@@ -107,8 +109,10 @@ export const pickAndImportEntries = async (): Promise<void> => {
         id: row.id || Date.now().toString() + Math.random().toString(36).slice(2),
         name: row.name || '',
         regno: Number(row.regno) || 0,
+        dob: formatDateimport(row.dob) || '',
         mobile: Number(row.mobile) || 0,
         standard: Number(row.standard) || 0,
+        guardian: row.guardian || '',
         profileImage: row.profileImage || null,
         active: row.active === 'REMOVED' ? 'REMOVED' : 'ACTIVE', // Parse string
         subjects,

@@ -1,3 +1,4 @@
+import { formatDate } from '@/src/utility/helpers';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
@@ -21,8 +22,10 @@ import { GRADE_SUBJECTS } from '../../utility/subjectList';
 export default function AddStudentScreen() {
   const [name, setName] = useState('');
   const [regno, setRegno] = useState('');
+  const [dob, setDob] = useState('');
   const [mobile, setMobile] = useState('');
   const [standard, setStandard] = useState('');
+  const [guardian, setGuardian] = useState('');
   const [profileImage, setProfileImage] = useState<string | null>(null);
 
   // Subject management
@@ -108,12 +111,16 @@ export default function AddStudentScreen() {
       return acc;
     }, {} as any);
 
+    const formatteddob = formatDate(dob) || '';
+
     try {
       await addEntry({
         name: name.trim(),
         regno: Number(regno),
+        dob: formatteddob || '',
         mobile: Number(mobile),
         standard: gradeNum,
+        guardian: guardian,
         active: 'ACTIVE',
         profileImage,
         subjects,
@@ -124,8 +131,10 @@ export default function AddStudentScreen() {
       // Reset state
       setName('');
       setRegno('');
+      setDob('');
       setMobile('');
       setStandard('');
+      setGuardian('');
       setProfileImage(null);
       setSubjects([]);
 
@@ -193,15 +202,25 @@ export default function AddStudentScreen() {
           <View style={{ flex: 1 }}>
             <TextInput
               style={styles.input}
+              placeholder="Date of birth"
+              placeholderTextColor={colors.textSecondary}
+              keyboardType="numeric"
+              value={dob}
+              onChangeText={setDob}
+            />
+          </View>
+        </View>
+
+        <TextInput
+              style={styles.input}
               placeholder="Class (1-7)"
               placeholderTextColor={colors.textSecondary}
               keyboardType="numeric"
               value={standard}
               onChangeText={setStandard}
             />
-          </View>
-        </View>
-
+        <View style={styles.row}>
+          <View style={{ flex: 1 }}>            
         <TextInput
           style={styles.input}
           placeholder="Mobile no"
@@ -210,6 +229,18 @@ export default function AddStudentScreen() {
           value={mobile}
           onChangeText={setMobile}
         />
+        </View>
+<View style={{ flex: 1 }}>            
+        <TextInput
+          style={styles.input}
+          placeholder="Guardian name"
+          placeholderTextColor={colors.textSecondary}
+          autoCapitalize='characters'
+          value={guardian}
+          onChangeText={setGuardian}
+        />
+        </View>
+        </View>
 
 
         {/* Submit */}
@@ -226,6 +257,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
+
   avatarContainer: {
     width: 100,
     height: 100,
@@ -239,28 +271,34 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     marginTop: 8
   },
+
   avatar: {
     width: '100%',
     height: '100%',
   },
+
   avatarPlaceholder: {
     alignItems: 'center',
     justifyContent: 'center',
   },
+
   avatarPlaceholderText: {
     color: colors.primary,
     fontSize: 12,
     fontWeight: 'bold',
     marginTop: 4,
   },
+
   removeImageBtn: {
     marginTop: 8,
   },
+
   removeImageTxt: {
     color: colors.alert,
     fontSize: 13,
     fontWeight: '600',
   },
+
   input: {
     backgroundColor: colors.surface,
     color: colors.text,
@@ -272,15 +310,18 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.06)',
     marginBottom: 15,
   },
+
   row: {
     flexDirection: 'row',
     gap: 12,
   },
+
   sectionDivider: {
     height: 1,
     backgroundColor: 'rgba(255,255,255,0.08)',
     marginVertical: 18,
   },
+
   sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
@@ -288,6 +329,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     marginLeft: 4
   },
+
   subjectsInfo: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -297,11 +339,13 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 8,
   },
+
   subjectsInfoText: {
     color: colors.textSecondary,
     fontSize: 12,
     flex: 1,
   },
+
   tagsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -309,6 +353,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 16,
   },
+
   tag: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -320,11 +365,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
   },
+
   tagText: {
     color: colors.text,
     fontSize: 14,
     fontWeight: '500',
   },
+
   noSubjectsMessage: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -335,11 +382,13 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 16,
   },
+
   noSubjectsText: {
     color: colors.alert,
     fontSize: 13,
     flex: 1,
   },
+
   submitBtn: {
     backgroundColor: colors.primary,
     padding: 16,
@@ -352,6 +401,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
+  
   submitBtnText: {
     color: colors.background,
     fontSize: 16,

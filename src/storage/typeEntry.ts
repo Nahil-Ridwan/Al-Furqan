@@ -25,8 +25,10 @@ export type Entry = {
   id: string;
   name: string;
   regno: number;
+  dob: string;
   mobile: number;
   standard: number; // represents current class
+  guardian: string;
   active: 'ACTIVE' | 'REMOVED';
   profileImage: string | null; // base64 image data or URI
   subjects: string[]; // up to 8 subjects

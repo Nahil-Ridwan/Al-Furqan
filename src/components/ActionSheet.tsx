@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useRef } from 'react';
 import { Animated, Modal, PanResponder, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useAppMode } from '../storage/appModeContext';
 import { colors } from '../styles/global';
+import { useAppMode } from '../utility/appModeContext';
 
 export type ActionOption = {
   text: string;
@@ -215,15 +215,17 @@ export default function CustomActionSheet({
 }
 
 const styles = StyleSheet.create({
-   overlay: {
+  overlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
+
   overlayTouchable: {
     flex: 1,
     justifyContent: 'flex-end',
   },
+
   actionSheetContainer: {
     backgroundColor: colors.popup,
     borderTopLeftRadius: 20,
@@ -241,6 +243,7 @@ const styles = StyleSheet.create({
     marginTop: 5,
     color: '#FFFFFF',
   },
+
   subtitle: {
     fontSize: 14,
     textAlign: 'center',
@@ -248,13 +251,14 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.6)',
   },
 
-  
   deleteButton: {
     backgroundColor: 'rgba(255, 59, 48, 0.15)',
   },
+
   deleteText: {
     color: '#FF3B30',
   },
+
   cancelButton: {
     padding: 15,
     borderRadius: 10,
@@ -262,6 +266,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.05)',
   },
+  
   cancelButtonText: {
     fontSize: 16,
     color: colors.text,
@@ -269,55 +274,55 @@ const styles = StyleSheet.create({
   },
 
   // Add this new style:
-actionButtonsRow: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  gap: 10,
-  marginBottom: 10,
-},
-
-shareButton: {
-  flex: 1,
-  backgroundColor: 'rgba(255,255,255,0.05)',
-  padding: 15,
-  borderRadius: 10,
-  alignItems: 'center',
-  justifyContent: 'center',
-  minHeight: 100, // Minimum height to maintain shape
-},
-
-// Update actionButton style:
-actionButton: {
-  flex: 1,
-  backgroundColor: 'rgba(255,255,255,0.05)',
-  padding: 15,
-  borderRadius: 10,
-  alignItems: 'center',
-  justifyContent: 'center',
-  aspectRatio: 1, // Makes buttons square
-  minHeight: 80, // Minimum height to maintain shape
-},
-
-// Update actionButtonText style:
-actionButtonText: {
-  fontSize: 13, // Changed from 16
-  fontWeight: '600',
-  color: '#FFFFFF',
-  textAlign: 'center',
-},
-
-actionIcon: {
-  marginBottom: 6,
-},
-
-// Add this style:
-dragIndicator: {
-  width: 40,
-  height: 4,
-  backgroundColor: 'rgba(255,255,255,0.3)',
-  borderRadius: 2,
-  alignSelf: 'center',
-  marginBottom: 15,
-  marginTop:11,
-},
+  actionButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginBottom: 10,
+  },
+  
+  shareButton: {
+    flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 100, // Minimum height to maintain shape
+  },
+  
+  // Update actionButton style:
+  actionButton: {
+    flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    aspectRatio: 1, // Makes buttons square
+    minHeight: 80, // Minimum height to maintain shape
+  },
+  
+  // Update actionButtonText style:
+  actionButtonText: {
+    fontSize: 13, // Changed from 16
+    fontWeight: '600',
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
+  
+  actionIcon: {
+    marginBottom: 6,
+  },
+  
+  // Add this style:
+  dragIndicator: {
+    width: 40,
+    height: 4,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 15,
+    marginTop:11,
+  },
 });
