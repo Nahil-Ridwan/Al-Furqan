@@ -8,7 +8,12 @@ export const studentsRef = collection(db, 'students');
 
 export const getEntries = async (): Promise<Entry[]> => {
   const cached = await readCache();
-  return cached;
+  return sortEntries(cached);
+};
+
+export const sortEntries = (entries: Entry[]): Entry[] => {
+  return entries
+    .sort((a, b) => (a.regno ?? -Infinity) - (b.regno ?? -Infinity));
 };
 
 // date handliing

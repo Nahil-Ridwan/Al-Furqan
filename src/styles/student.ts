@@ -411,7 +411,7 @@ statDivider: { width: 1, height: 30, backgroundColor: 'hsla(0, 3%, 77%, 0.43)' }
   },
 
   feeTotalVal: {
-    color: '#6bcb77',
+    color: colors.primary,
     fontSize: 24,
     fontWeight: 'bold',
     marginTop: -4,

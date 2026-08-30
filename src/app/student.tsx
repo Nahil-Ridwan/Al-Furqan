@@ -787,7 +787,7 @@ export default function StudentDetailScreen() {
                         <View style={styles.feeInputRow}>
                           <Text style={styles.feeLabel}>1st Installment</Text>
                           <TextInput
-                            style={styles.feeInput}
+                            style={[styles.feeInput, {color: fees.first < 600 ? 'hsl(0, 91%, 69%)' : 'hsl(122, 56%, 62%)'}]}
                             placeholder="0"
                             placeholderTextColor={colors.textSecondary}
                             keyboardType="numeric"
@@ -799,7 +799,7 @@ export default function StudentDetailScreen() {
                         <View style={styles.feeInputRow}>
                           <Text style={styles.feeLabel}>2nd Installment</Text>
                           <TextInput
-                            style={styles.feeInput}
+                            style={[styles.feeInput, {color: fees.second < 600 ? 'hsl(0, 91%, 69%)' : 'hsl(122, 56%, 62%)'}]}
                             placeholder="0"
                             placeholderTextColor={colors.textSecondary}
                             keyboardType="numeric"
@@ -811,7 +811,7 @@ export default function StudentDetailScreen() {
                         <View style={styles.feeInputRow}>
                           <Text style={styles.feeLabel}>3rd Installment</Text>
                           <TextInput
-                            style={styles.feeInput}
+                            style={[styles.feeInput, {color: fees.third < 600 ? 'hsl(0, 91%, 69%)' : 'hsl(122, 56%, 62%)'}]}
                             placeholder="0"
                             placeholderTextColor={colors.textSecondary}
                             keyboardType="numeric"
@@ -823,7 +823,7 @@ export default function StudentDetailScreen() {
                         <View style={styles.feeInputRow}>
                           <Text style={styles.feeLabel}>4th Installment</Text>
                           <TextInput
-                            style={styles.feeInput}
+                            style={[styles.feeInput, {color: fees.fourth < 400 ? 'hsl(0, 91%, 69%)' : 'hsl(122, 56%, 62%)'}]}
                             placeholder="0"
                             placeholderTextColor={colors.textSecondary}
                             keyboardType="numeric"

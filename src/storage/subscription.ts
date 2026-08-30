@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { onSnapshot, query, where } from 'firebase/firestore';
 import { AppState, AppStateStatus } from 'react-native';
-import { studentsRef } from '../utility/helpers';
+import { sortEntries, studentsRef } from '../utility/helpers';
 import { readCache, writeCache } from './cacheService';
 import { syncPendingMutations } from './offlineMutation';
 import { Entry } from './typeEntry';
@@ -19,9 +19,10 @@ const SAFE_OVERLAP_MS = 2 * 60 * 1000; // 2 minutes
 export const subscribers = new Set<(entries: Entry[]) => void>();
 
 export const notifySubscribers = (entries: Entry[]) => {
+  const sorted = sortEntries(entries);
   subscribers.forEach((cb) => {
     try {
-      cb(entries);
+      cb(sorted);
     } catch (err) {
       console.error('Error notifying subscriber:', err);
     }
@@ -175,7 +176,7 @@ export const subscribeToEntries = (callback: (entries: Entry[]) => void) => {
 
   // Step 1: serve cache immediately so the UI renders without a loading state.
   readCache().then((cached) => {
-    if (cached.length > 0) callback(cached);
+    if (cached.length > 0) callback(sortEntries(cached));
   });
 
   // Step 2: flush any queued offline mutations now that we (might) be online.

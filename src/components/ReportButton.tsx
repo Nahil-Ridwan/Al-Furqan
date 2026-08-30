@@ -41,7 +41,7 @@ ${marksSummary}
   
   const encodedMessage = encodeURIComponent(message);
   
-  const ReportUrl = `https://wa.me/91${phone}?text=${encodedMessage}`;
+  const ReportUrl = `whatsapp://send?phone=91${phone}&text=${encodedMessage}`
     
   await Linking.openURL(ReportUrl);
     

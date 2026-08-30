@@ -11,7 +11,7 @@ export default function WhatsappButton({ entry }: WhatsappButtonProps) {
   const handleWhatsapp = async () => {
   const phone = String(entry.mobile).replace(/\D/g, '');
   
-  const WhatsappUrl = `https://wa.me/91${phone}`;
+  const WhatsappUrl = `whatsapp://send?phone=91${phone}`;
     
   await Linking.openURL(WhatsappUrl);
     

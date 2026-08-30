@@ -114,8 +114,8 @@ export default function EntryItem({ student, onDelete }: EntryItemProps) {
           </View>
 
           <View style={styles.badgeRow}>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{subjects.length} Subjects</Text>
+            <View style={[styles.badge, {backgroundColor: 'hsla(0, 97%, 55%, 0.10)'}]}>
+              <Text style={[styles.badgeText, {color: '#ff4d4d'}]}># {regno}</Text>
             </View>
             <View style={[styles.badge, styles.feeBadge]}>
               <Text style={[styles.badgeText, styles.feeBadgeText]}>
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
   },
 
   feeBadge: {
-    backgroundColor: '#6bcb7722',
+    backgroundColor: 'hsla(128, 48%, 61%, 0.13)',
   },
 
   feeBadgeText: {
