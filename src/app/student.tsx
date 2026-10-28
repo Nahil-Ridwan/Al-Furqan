@@ -570,9 +570,9 @@ export default function StudentDetailScreen() {
           
             </View>
 
-            <View style={styles.guardianStatItem}>
-                <Ionicons name="person-outline" size={16} color={colors.text} style={{ marginTop:7 }}/>
-                  <TextInput
+            <View style={styles.tagRow}>
+              <Ionicons name="person-outline" size={17} color={colors.text} style={{marginTop:7}}/>              
+              <TextInput
                     style={styles.guardianstatValue}
                     value={guardian}
                     onChangeText={(text) => setStudent({ ...student, guardian: text })}
@@ -580,8 +580,10 @@ export default function StudentDetailScreen() {
                     placeholderTextColor={colors.textSecondary}
                     textAlign="center"
                     editable={!isViewMode}
-                  />
-              </View>
+                  />          
+
+            </View>
+
           
             {/* Stats row - DOB & Mobile shown like Rating/Earned/Rate */}
             <View style={styles.statsRow}>

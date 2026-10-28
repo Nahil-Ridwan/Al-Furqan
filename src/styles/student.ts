@@ -86,18 +86,12 @@ export const styles = StyleSheet.create({
     color:colors.text 
   },
 
-  guardianStatItem: { 
-    alignItems: 'flex-start', 
-    flexDirection: 'row',
-    gap: 4,
-    flex:1 
-  },
-
 
   guardianstatValue: { 
     fontSize: 14, 
     fontWeight: '600', 
     marginTop: -3, 
+    marginLeft: -3,
     color:colors.text 
   },
 
