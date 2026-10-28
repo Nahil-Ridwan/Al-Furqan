@@ -540,7 +540,7 @@ export default function StudentDetailScreen() {
               />
           
             {/* Subtitle - class */}
-              <View style={styles.tagRow}>
+            <View style={styles.tagRow}>
               <TextInput
                 style={styles.subtitleCentered}
                 value={String('Class '+standard)}
@@ -552,7 +552,7 @@ export default function StudentDetailScreen() {
                 editable={!isViewMode}
               />
           
-            {/* Tag-style pills row */}
+              {/* Tag-style pills row */}
           
           
               <View style={styles.tagPill}>
@@ -569,6 +569,19 @@ export default function StudentDetailScreen() {
               </View>
           
             </View>
+
+            <View style={styles.guardianStatItem}>
+                <Ionicons name="person-outline" size={16} color={colors.text} style={{ marginTop:7 }}/>
+                  <TextInput
+                    style={styles.guardianstatValue}
+                    value={guardian}
+                    onChangeText={(text) => setStudent({ ...student, guardian: text })}
+                    placeholder='Guardian'
+                    placeholderTextColor={colors.textSecondary}
+                    textAlign="center"
+                    editable={!isViewMode}
+                  />
+              </View>
           
             {/* Stats row - DOB & Mobile shown like Rating/Earned/Rate */}
             <View style={styles.statsRow}>
@@ -583,21 +596,6 @@ export default function StudentDetailScreen() {
                       setStudent({ ...student, dob: String(date) });
                     }}
                     placeholder='Date of birth'
-                    placeholderTextColor={colors.textSecondary}
-                    textAlign="center"
-                    editable={!isViewMode}
-                  />
-              </View>
-          
-              <View style={styles.statDivider} />
-          
-              <View style={styles.statItem}>
-                <Ionicons name="person-outline" size={16} color={colors.text} />
-                  <TextInput
-                    style={styles.statValue}
-                    value={guardian}
-                    onChangeText={(text) => setStudent({ ...student, guardian: text })}
-                    placeholder='Guardian'
                     placeholderTextColor={colors.textSecondary}
                     textAlign="center"
                     editable={!isViewMode}

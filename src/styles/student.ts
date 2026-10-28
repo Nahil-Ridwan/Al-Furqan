@@ -4,46 +4,108 @@ import { colors } from "./global";
 export const styles = StyleSheet.create({
 
   
-avatarRingContainer: { marginTop:10 },
-avatarRing: {
-  padding: 4,
-  borderRadius: 100,
-  backgroundColor: '#dceefc',
-},
+  avatarRingContainer: { 
+    marginTop:10 
+  },
 
+  avatarRing: {
+    padding: 4,
+    borderRadius: 100,
+    backgroundColor: '#dceefc',
+  },
 
-  profileImage: { width: 72, height: 72, borderRadius: 36 },
+  profileImage: { 
+    width: 72, 
+    height: 72,
+    borderRadius: 36 
+  },
 
   profileCard: {
-  alignItems: 'flex-start',
-  padding: 22,
-  borderRadius: 30,
-  backgroundColor: colors.surface,
-  borderColor: colors.contentborder,
-  borderWidth: 1,
-  margin: 16,
-  marginBottom: 5,
-},
+    alignItems: 'flex-start',
+    padding: 22,
+    borderRadius: 30,
+    backgroundColor: colors.surface,
+    borderColor: colors.contentborder,
+    borderWidth: 1,
+    margin: 16,
+    marginBottom: 5,
+  },
+
+  studentNameCentered: { 
+    fontSize: 25,
+    fontWeight: '600', 
+    marginTop: 5, 
+    marginBottom: 2, 
+    color: colors.text 
+  },
+
+  subtitleCentered: { 
+    fontSize: 19, 
+    color: 'hsl(240, 19%, 86%)', 
+    marginTop: -7
+  },
+
+  tagRow: { 
+    flexDirection: 'row', 
+    gap:10 
+  },
+
+  tagPill: {
+    flexDirection: 'row', 
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    marginTop:-5,
+    height:40,
+    borderRadius: 20, 
+    backgroundColor: 'hsl(0, 1%, 32%)',
+  },
+
+  tagText: { 
+    fontSize: 13, 
+    color: colors.text 
+  },
+
+  statsRow: {
+    flexDirection: 'row', 
+    alignItems: 'center',
+    marginTop: 17, 
+    width: '100%', 
+    justifyContent: 'space-around', 
+    gap: 14
+  },
+
+  statItem: { 
+    alignItems: 'center', 
+    flex:1 
+  },
+
+  statValue: { 
+    fontSize: 12.7, 
+    fontWeight: '600', 
+    marginTop: 2, 
+    color:colors.text 
+  },
+
+  guardianStatItem: { 
+    alignItems: 'flex-start', 
+    flexDirection: 'row',
+    gap: 4,
+    flex:1 
+  },
 
 
-studentNameCentered: { fontSize: 25, fontWeight: '600', marginTop: 5, marginBottom: 2, color: colors.text },
-subtitleCentered: { fontSize: 19, color: 'hsl(240, 19%, 86%)', marginTop: -7},
-tagRow: { flexDirection: 'row', gap:10 },
-tagPill: {
-  flexDirection: 'row', alignItems: 'center',
-  paddingHorizontal: 12,
-  marginTop:-5,
-  height:40,
-  borderRadius: 20, backgroundColor: 'hsl(0, 1%, 32%)',
-},
-tagText: { fontSize: 13, color: colors.text },
-statsRow: {
-  flexDirection: 'row', alignItems: 'center',
-  marginTop: 17, width: '100%', justifyContent: 'space-around', gap: 14
-},
-statItem: { alignItems: 'center', flex:1 },
-statValue: { fontSize: 12.7, fontWeight: '600', marginTop: 2, color:colors.text },
-statDivider: { width: 1, height: 30, backgroundColor: 'hsla(0, 3%, 77%, 0.43)' },
+  guardianstatValue: { 
+    fontSize: 14, 
+    fontWeight: '600', 
+    marginTop: -3, 
+    color:colors.text 
+  },
+
+  statDivider: { 
+    width: 1, 
+    height: 30, 
+    backgroundColor: 'hsla(0, 3%, 77%, 0.43)' 
+  },
 
   totalText: {
     fontWeight: '700',
